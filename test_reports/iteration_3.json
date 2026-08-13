@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 3 full e2e test of the new profile-based architecture. Backend: 35 pytest tests (auth, brute-force lockout, bcrypt format, httpOnly cookie, CORS, worksheet CRUD, isolation, malformed-ObjectId 404, header-over-cookie precedence, admin) plus 7 NEW profile tests (GET defaults, PUT persistence, per-user isolation, profile embedded in GET /api/worksheets/{id} for owner and admin, dynamic-weeks data round-trip) — 35/35 PASSED. Frontend: registered a fresh student via UI, verified dashboard profile-completeness warning + stat-mk, filled/saved/reloaded /profile (all fields persisted), created a worksheet, verified editor has only the 4 new sections (no Identitas/Tujuan), header nama/NIM + Ubah Profil link, course dropdowns (js-mk-0, tm-mk-0) populated with 'Nama (SKS)' from profile, add/remove week columns (9->11->10 with header 1..10) with values persisting after save+reload, Tercapai Ya/Tidak select, add-row/add-block, all SQ3R + peta konsep fields persisted, Pratinjau renders profile identitas/tujuan/target/mata kuliah + all worksheet sections with dynamic weeks and download-pdf-button, admin-view-<id> shows the target student's profile identitas + their worksheet, and regressions (student blocked from /admin -> /dashboard, delete worksheet via confirm dialog, logout -> /login). No blocking issues found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/profile", "issue": "Body is an untyped dict (ProfileUpdate.profile: dict) — no Pydantic schema for identitas/mata_kuliah, so arbitrary/malformed structures are stored verbatim and can break the renderer later. Consider typed sub-models."},
+      {"endpoint": "CORS middleware", "issue": "CORS_ORIGINS='*' combined with allow_credentials=True. Starlette echoes the origin so tests pass, but explicit origin list is safer for cookie auth."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "WorksheetEditor vs WorksheetView", "issues": ["Section numbering differs: editor shows 1. Jadwal / 2. Target Mingguan / 3. SQ3R / 4. Peta Konsep while the preview numbers 1. Identitas ... 6. Peta Konsep. Cosmetic only, but may confuse students matching editor to printout."]},
+      {"screen": "Profile", "issues": ["NIM field (p-nim) is freely editable, so the printed identitas NIM can diverge from the login/account NIM. Consider read-only or validation."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Optional: align section numbering between editor and preview/PDF.",
+    "Optional: make profile NIM read-only (or validate against account NIM).",
+    "Optional: add Pydantic sub-models for the profile payload."
+  ],
+  "critical_code_review_comments": [
+    "WorksheetEditor calls mergeProfile(pr.profile, null); if /profile ever fails the editor still renders with empty nama/NIM — a fallback to the auth user would be safer.",
+    "Legacy worksheets created before the migration still carry data.identitas/tujuan_belajar/mata_kuliah which is now dead weight (ignored by the view). A one-off cleanup/migration would keep documents lean."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Registered UI test student NIM QA1786628084 / student123 (profile: 2 mata kuliah, worksheet created then deleted during regression test). pytest test users/worksheets prefixed TEST are auto-cleaned by the session fixture.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "Admin admin/admin123 (verified). Student 0666652216/student123 (verified via admin view only, no failed logins issued). New QA student QA1786628084/student123.",
+  "context_for_next_testing_agent": "All 35 backend tests in /app/backend/tests/backend_test.py pass (run: cd /app/backend && python -m pytest tests/backend_test.py). Profile tests live in class TestProfile. Frontend flows verified end to end this iteration: register->profile warning->profile save/persist->worksheet create->course dropdowns->dynamic weeks->SQ3R->save/reload->preview->admin view->delete->logout. Remaining items are cosmetic/hardening only. Avoid repeated failed logins on admin/0666652216 (15-min lockout keyed on X-Forwarded-For+NIM).",
+  "rca_of_the_issue": "N/A - no defects reproduced. The iteration-2 fixes (malformed ObjectId -> 404, Authorization header precedence over cookie) and the profile-embedding fix (str user_id -> ObjectId in profile_for_user_id) are all confirmed working."
+}

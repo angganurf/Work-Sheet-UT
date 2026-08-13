@@ -1,0 +1,98 @@
+{
+  "theme": "light",
+  "typography": {
+    "headings": {
+      "font_family": "'Chivo', sans-serif",
+      "weights": ["400", "700", "900"],
+      "description": "Used for all page titles, section headers, and data labels. Gives a structured, official, yet modern feel. BANNED: Inter, Roboto."
+    },
+    "body": {
+      "font_family": "'IBM Plex Sans', sans-serif",
+      "weights": ["400", "500", "600", "700"],
+      "description": "Highly readable, excellent for academic forms, tables, and dense data."
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight text-slate-900",
+      "h2": "text-2xl md:text-3xl font-semibold tracking-tight text-slate-800",
+      "h3": "text-xl font-medium tracking-tight text-[#404080]",
+      "body": "text-base leading-relaxed text-slate-700",
+      "labels": "text-xs font-bold uppercase tracking-[0.1em] text-slate-500"
+    }
+  },
+  "colors": {
+    "primary": {
+      "base": "#404080",
+      "hover": "#29166F",
+      "light": "#EAEAF2",
+      "description": "Universitas Terbuka Official Blue. Use for primary actions, active states, header accents, and key highlights."
+    },
+    "background": {
+      "app": "#F8F9FA",
+      "card": "#FFFFFF",
+      "description": "Very subtle cool gray/off-white for the app background to make the crisp white worksheet cards pop."
+    },
+    "text": {
+      "main": "#0F172A",
+      "muted": "#64748B",
+      "inverse": "#FFFFFF"
+    },
+    "border": {
+      "default": "#E2E8F0",
+      "focus": "#404080"
+    }
+  },
+  "layouts": {
+    "dashboard": "Sidebar layout with a top header. The main content area should have a max-width and generous padding (p-6 md:p-12). Focus on functional data display.",
+    "worksheet_form": "The Lembar Kerja should look like a digitized official document. Use a central paper-like container with max-w-5xl mx-auto, shadow-sm, border border-slate-200, bg-white, and p-8 md:p-12. Divide sections clearly with H3 titles, solid 1px dividers, and numbering.",
+    "spacing": "Follow 'Generous Spacing Philosophy'. Use gap-8 or gap-12 between major form sections. Use gap-4 for related fields."
+  },
+  "visual_enhancers": {
+    "borders": "1px solid crisp borders. Avoid heavy drop shadows; use shadow-sm for cards. Focus rings should be 2px solid #404080 with a 2px offset.",
+    "glassmorphism": "Use only on the sticky top navigation (backdrop-blur-xl bg-white/80 border-b border-slate-200).",
+    "corners": "Subtle roundness. Use rounded-md (6px) or rounded-lg (8px). Do not use fully rounded pills for form inputs to maintain the academic tone."
+  },
+  "components": {
+    "buttons": "Sharp or slightly rounded (rounded-md). Primary buttons use bg-[#404080] text-white hover:bg-[#29166F] transition-colors. Add micro-interactions like active:scale-[0.98].",
+    "inputs": "Shadcn standard but styled with focus:border-[#404080] focus:ring-1 focus:ring-[#404080]. Background white.",
+    "tables": "Crucial for the Schedule Matrix. Use clear border-collapse layouts with border-slate-200. Table headers should have a subtle bg-[#EAEAF2] with text-[#404080] font-semibold. Cells must be padded nicely (p-3).",
+    "cards": "Flat, 1px border, minimal shadows. Keep it looking like academic paper.",
+    "alerts": "Use thin left borders (border-l-4 border-[#404080]) for info boxes and instructions."
+  },
+  "icons_library": "lucide-react",
+  "image_urls": [
+    {
+      "url": "https://images.unsplash.com/photo-1779819710368-3e57daa007c1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHw0fHx1bml2ZXJzaXR5JTIwY2FtcHVzJTIwYnVpbGRpbmclMjBhYnN0cmFjdCUyMGJsdWV8ZW58MHx8fHwxNzg2NjI1MzA0fDA&ixlib=rb-4.1.0&q=85",
+      "category": "auth_background",
+      "description": "Modern glass building reflecting older architecture, great for the login page split screen (50% width on desktop)."
+    },
+    {
+      "url": "https://images.pexels.com/photos/6549587/pexels-photo-6549587.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "category": "dashboard_banner",
+      "description": "Student studying, use as an optional welcoming banner image inside the dashboard area to add human element."
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Do NOT use default Inter font. Import and apply 'Chivo' for headings and 'IBM Plex Sans' for body/tables.",
+    "Ensure the 'Lembar Kerja' form is not one massive scrolling list of inputs without hierarchy. Group them visually into logical sections mimicking an official physical worksheet. Sections: 1. Identitas, 2. Tujuan & Target, 3. Tabel Mata Kuliah, 4. Jadwal Per Semester, 5. SQ3R, 6. Peta Konsep.",
+    "For the 'Jadwal Belajar Per Semester' and 'Target Mingguan', use robust data tables (HTML table or Shadcn Table) with clear borders to resemble a matrix.",
+    "The SQ3R sections (Survey, Questions, Read, Recite, Review) should be distinctly separated, perhaps using distinct numbered cards or left-bordered blocks to guide the student.",
+    "Add a PDF export button at the top or bottom of the worksheet view. Ensure print styles or PDF generation logic focuses on layout clarity.",
+    "Admin panel should be a dense data-table view to list all student worksheets, easily filterable by NIM or Name.",
+    "Never use AI placeholders for logos. Just use text 'UNIVERSITAS TERBUKA' in Chivo font with the official #404080 color.",
+    "All interactive and key informational elements MUST include a 'data-testid' attribute (e.g., data-testid='login-button', data-testid='worksheet-form')."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Never use generic centered text alignment globally.",
+    "Apply precise padding (e.g., p-8 or p-12) to containers; avoid cramped spaces.",
+    "Use standard hover and focus states for all interactive elements to ensure accessibility.",
+    "Include specific CSS transitions for color, background, and transform (e.g., transition-colors duration-200), do not use 'transition-all'.",
+    "Use sonner for toast notifications.",
+    "For icons, utilize lucide-react.",
+    "Do not over-engineer components. Stick to Shadcn UI fundamentals combined with pure Tailwind structure for complex sections."
+  ],
+  "accessibility": [
+    "Maintain WCAG AA contrast, especially for text on the official blue background.",
+    "All form fields must have visible labels and aria-labels where appropriate.",
+    "Focus rings must be distinctly visible for keyboard navigation."
+  ]
+}

@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: 'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #F8F9FA;
+}
+
+.font-heading {
+    font-family: 'Chivo', sans-serif;
+}
+
+@layer base {
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 47% 11%;
+        --primary: 240 33% 38%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 240 25% 93%;
+        --secondary-foreground: 240 33% 30%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 16% 47%;
+        --accent: 240 25% 93%;
+        --accent-foreground: 240 33% 30%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 214 32% 91%;
+        --input: 214 32% 91%;
+        --ring: 240 33% 38%;
+        --radius: 0.5rem;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply text-foreground;
+    }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #EAEAF2; }
+::-webkit-scrollbar-thumb { background: #b4b4cf; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #404080; }
+
+::selection { background: #404080; color: #fff; }
+
+/* Print styles for PDF export */
+@media print {
+    @page { size: A4; margin: 14mm; }
+    body { background: #fff; }
+    .no-print { display: none !important; }
+    .print-container {
+        box-shadow: none !important;
+        border: none !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .print-break { page-break-inside: avoid; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; }
+}
