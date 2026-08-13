@@ -453,6 +453,52 @@ class TestProfile:
         assert got["jadwal_semester"][0]["catatan"] == "Senin dan Rabu"
         sess.delete(f"{API}/worksheets/{wid}", headers=h(token))
 
+    def test_per_module_monitoring_and_sq3r_round_trip(self, sess):
+        """Iteration 5: target_mingguan rows with nested monitoring{} and sq3r{} round-trip verbatim."""
+        _, token, _ = register_student(sess, "pm")
+        wid = sess.post(f"{API}/worksheets", headers=h(token), json={"title": "TEST_ws_permodule"}).json()["id"]
+        row0 = {
+            "minggu": "1", "target": "Modul 1", "halaman": "34", "media": "Modul, Google", "jam": "3",
+            "monitoring": {
+                "enabled": True, "halaman_target": "34", "halaman_realisasi": "30",
+                "waktu_target": "3", "waktu_realisasi": "2.5", "media": "Modul, Google",
+                "ketercapaian": "Ya", "penyebab": "-", "solusi": "Lanjut",
+            },
+            "sq3r": {
+                "enabled": True,
+                "survey": {"judul_bmp": "BMP SO", "penulis_bmp": "Penulis", "jumlah_sks": "3",
+                           "jumlah_modul": "9", "judul_modul": "Pengenalan", "jumlah_halaman": "34",
+                           "judul_kegiatan": ["KB1", "KB2"]},
+                "questions": ["Apa itu OS?", "Fungsi kernel?"],
+                "read": "Catatan membaca modul 1",
+                "recite": ["OS mengelola sumber daya"],
+                "review": {"terjawab": ["Q1"], "dipahami": ["Kernel"], "belum_dipahami": ["Scheduling"]},
+            },
+        }
+        row1 = {
+            "minggu": "2", "target": "Modul 2", "halaman": "20", "media": "BMP", "jam": "2",
+            "monitoring": {"enabled": True, "halaman_target": "20", "halaman_realisasi": "5",
+                           "waktu_target": "2", "waktu_realisasi": "1", "media": "BMP",
+                           "ketercapaian": "Tidak", "penyebab": "Sibuk", "solusi": "Tambah jam"},
+            "sq3r": {"enabled": False, "survey": {}, "questions": [""], "read": "",
+                     "recite": [""], "review": {"terjawab": [""], "dipahami": [""], "belum_dipahami": [""]}},
+        }
+        data = {"semester": "1", "weeks": 9, "peta_konsep": "peta xyz",
+                "target_mingguan": [{"mata_kuliah": "Sistem Operasi (3)", "rows": [row0, row1]}]}
+        r = sess.put(f"{API}/worksheets/{wid}", headers=h(token), json={"data": data})
+        assert r.status_code == 200, r.text
+        got = sess.get(f"{API}/worksheets/{wid}", headers=h(token)).json()["data"]
+        blk = got["target_mingguan"][0]
+        assert blk["mata_kuliah"] == "Sistem Operasi (3)"
+        assert blk["rows"][0] == row0, "row0 (with nested monitoring+sq3r) did not round-trip verbatim"
+        assert blk["rows"][1] == row1
+        assert blk["rows"][0]["monitoring"]["enabled"] is True
+        assert blk["rows"][0]["sq3r"]["survey"]["judul_kegiatan"] == ["KB1", "KB2"]
+        assert blk["rows"][0]["sq3r"]["review"]["belum_dipahami"] == ["Scheduling"]
+        assert blk["rows"][1]["sq3r"]["enabled"] is False
+        assert got["peta_konsep"] == "peta xyz"
+        sess.delete(f"{API}/worksheets/{wid}", headers=h(token))
+
 
 # ---------------- CORS ----------------
 class TestCors:

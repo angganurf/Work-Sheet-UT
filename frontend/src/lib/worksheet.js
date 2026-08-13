@@ -1,47 +1,54 @@
-// ---------------- Worksheet (per lembar kerja) ----------------
+// ---------------- Per-row Monitoring & SQ3R ----------------
+export function emptyRowMonitoring() {
+  return {
+    enabled: false,
+    halaman_target: "", halaman_realisasi: "",
+    waktu_target: "", waktu_realisasi: "",
+    media: "", ketercapaian: "", penyebab: "", solusi: "",
+  };
+}
+
+export function emptyRowSQ3R() {
+  return {
+    enabled: false,
+    survey: {
+      judul_bmp: "", penulis_bmp: "", jumlah_sks: "", jumlah_modul: "",
+      judul_modul: "", jumlah_halaman: "", judul_kegiatan: [""],
+    },
+    questions: [""],
+    read: "",
+    recite: [""],
+    review: { terjawab: [""], dipahami: [""], belum_dipahami: [""] },
+  };
+}
+
+export function emptyPlanningRow() {
+  return { minggu: "", target: "", halaman: "", media: "", jam: "", monitoring: emptyRowMonitoring(), sq3r: emptyRowSQ3R() };
+}
+
+function normalizeRow(r) {
+  const base = emptyPlanningRow();
+  return {
+    minggu: r.minggu || "", target: r.target || "", halaman: r.halaman || "",
+    media: r.media || "", jam: r.jam || "",
+    monitoring: { ...base.monitoring, ...(r.monitoring || {}) },
+    sq3r: {
+      ...base.sq3r,
+      ...(r.sq3r || {}),
+      survey: { ...base.sq3r.survey, ...((r.sq3r || {}).survey || {}) },
+      review: { ...base.sq3r.review, ...((r.sq3r || {}).review || {}) },
+    },
+  };
+}
+
+// ---------------- Worksheet ----------------
 export function defaultWorksheetData() {
   return {
     semester: "",
     weeks: 9,
     jadwal_semester: [{ mata_kuliah: "", minggu: Array(9).fill(""), catatan: "" }],
-    // Perencanaan (Gambar 1): Minggu, Target Belajar, Jumlah Halaman Modul, Media Belajar, Lama Belajar (jam)
-    target_mingguan: [
-      {
-        mata_kuliah: "",
-        rows: [{ minggu: "", target: "", halaman: "", media: "", jam: "" }],
-      },
-    ],
-    // Monitoring (Gambar 2): Minggu, Target, Jumlah Halaman (Target/Realisasi),
-    // Waktu Belajar (Target/Realisasi), Media, Ketercapaian, Penyebab, Solusi
-    monitoring_mingguan: [
-      {
-        mata_kuliah: "",
-        rows: [
-          {
-            minggu: "",
-            target: "",
-            halaman_target: "",
-            halaman_realisasi: "",
-            waktu_target: "",
-            waktu_realisasi: "",
-            media: "",
-            ketercapaian: "",
-            penyebab: "",
-            solusi: "",
-          },
-        ],
-      },
-    ],
-    sq3r: {
-      survey: {
-        judul_bmp: "", penulis_bmp: "", jumlah_sks: "", jumlah_modul: "",
-        judul_modul: "", jumlah_halaman: "", judul_kegiatan: [""],
-      },
-      questions: [""],
-      read: "",
-      recite: [""],
-      review: { terjawab: [""], dipahami: [""], belum_dipahami: [""] },
-    },
+    // Target & Jadwal Belajar Mingguan (perencanaan) — tiap baris (modul) punya monitoring & SQ3R sendiri
+    target_mingguan: [{ mata_kuliah: "", rows: [emptyPlanningRow()] }],
     peta_konsep: "",
   };
 }
@@ -57,52 +64,61 @@ export function mergeWorksheetData(data) {
     while (minggu.length < weeks) minggu.push("");
     return { mata_kuliah: r.mata_kuliah || "", minggu: minggu.slice(0, weeks), catatan: r.catatan || "" };
   });
-  merged.target_mingguan = data.target_mingguan || base.target_mingguan;
-  merged.monitoring_mingguan = data.monitoring_mingguan || base.monitoring_mingguan;
-  merged.sq3r = {
-    ...base.sq3r,
-    ...(data.sq3r || {}),
-    survey: { ...base.sq3r.survey, ...((data.sq3r || {}).survey || {}) },
-    review: { ...base.sq3r.review, ...((data.sq3r || {}).review || {}) },
-  };
+  merged.target_mingguan = (data.target_mingguan || base.target_mingguan).map((b) => ({
+    mata_kuliah: b.mata_kuliah || "",
+    rows: (b.rows && b.rows.length ? b.rows : [emptyPlanningRow()]).map(normalizeRow),
+  }));
   return merged;
 }
 
-export function emptyPlanningRow() {
-  return { minggu: "", target: "", halaman: "", media: "", jam: "" };
-}
-export function emptyMonitoringRow() {
+// Copy planning row values into its monitoring target fields
+export function planToMonitoring(row) {
   return {
-    minggu: "", target: "", halaman_target: "", halaman_realisasi: "",
-    waktu_target: "", waktu_realisasi: "", media: "", ketercapaian: "", penyebab: "", solusi: "",
+    ...row.monitoring,
+    enabled: true,
+    halaman_target: row.halaman || row.monitoring.halaman_target || "",
+    waktu_target: row.jam || row.monitoring.waktu_target || "",
+    media: row.media || row.monitoring.media || "",
   };
 }
 
-// ---------------- Progress ----------------
-export function computeCourseProgress(monitoring) {
-  return (monitoring || [])
+// ---------------- Progress (from per-row monitoring) ----------------
+export function computeCourseProgress(targetMingguan) {
+  return (targetMingguan || [])
     .filter((b) => (b.mata_kuliah || "").trim())
     .map((b) => {
-      const rows = (b.rows || []).filter((r) => (r.ketercapaian || "").trim());
-      const done = rows.filter((r) => (r.ketercapaian || "").toLowerCase() === "ya").length;
+      const rows = (b.rows || []).filter((r) => r.monitoring?.enabled && (r.monitoring?.ketercapaian || "").trim());
+      const done = rows.filter((r) => (r.monitoring.ketercapaian || "").toLowerCase() === "ya").length;
       const total = rows.length;
       return { mata_kuliah: b.mata_kuliah, done, total, pct: total ? Math.round((done / total) * 100) : 0 };
-    });
+    })
+    .filter((c) => c.total > 0);
 }
 
 export function overallProgress(worksheets) {
   let done = 0, total = 0;
   (worksheets || []).forEach((w) => {
-    computeCourseProgress(w.data?.monitoring_mingguan).forEach((c) => { done += c.done; total += c.total; });
+    computeCourseProgress(w.data?.target_mingguan).forEach((c) => { done += c.done; total += c.total; });
   });
   return total ? Math.round((done / total) * 100) : 0;
 }
 
+// Flatten rows that have monitoring or sq3r filled, with context
+export function collectResults(targetMingguan) {
+  const out = [];
+  (targetMingguan || []).forEach((b) => {
+    (b.rows || []).forEach((r) => {
+      if (r.monitoring?.enabled || r.sq3r?.enabled) {
+        out.push({ mata_kuliah: b.mata_kuliah, minggu: r.minggu, target: r.target, monitoring: r.monitoring, sq3r: r.sq3r });
+      }
+    });
+  });
+  return out;
+}
+
 // ---------------- Reminders (from "Catatan (Waktu)" day) ----------------
 const DAY_ORDER = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-const DAY_KEYS = {
-  minggu: 0, senin: 1, selasa: 2, rabu: 3, kamis: 4, jumat: 5, "jum'at": 5, sabtu: 6,
-};
+const DAY_KEYS = { minggu: 0, senin: 1, selasa: 2, rabu: 3, kamis: 4, jumat: 5, "jum'at": 5, sabtu: 6 };
 
 export function parseDays(text) {
   if (!text) return [];
@@ -112,17 +128,13 @@ export function parseDays(text) {
   return [...found].sort((a, b) => a - b);
 }
 
-export function dayName(idx) {
-  return DAY_ORDER[idx] || "";
-}
+export function dayName(idx) { return DAY_ORDER[idx] || ""; }
 
-// Build a map dayIdx -> [{mata_kuliah, catatan, worksheetTitle}]
 export function buildReminders(worksheets) {
   const byDay = {};
   (worksheets || []).forEach((w) => {
     (w.data?.jadwal_semester || []).forEach((row) => {
-      const days = parseDays(row.catatan);
-      days.forEach((d) => {
+      parseDays(row.catatan).forEach((d) => {
         if (!byDay[d]) byDay[d] = [];
         byDay[d].push({ mata_kuliah: row.mata_kuliah || "Mata kuliah", catatan: row.catatan, worksheet: w.title });
       });
@@ -131,7 +143,7 @@ export function buildReminders(worksheets) {
   return byDay;
 }
 
-// ---------------- Profile (diisi sekali per mahasiswa) ----------------
+// ---------------- Profile ----------------
 export function defaultProfile(user) {
   return {
     identitas: {
