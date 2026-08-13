@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api, { formatApiErrorDetail } from "@/lib/api";
 import { TopNav } from "@/components/TopNav";
-import { mergeWorksheetData, mergeProfile } from "@/lib/worksheet";
+import { mergeWorksheetData, mergeProfile, computeCourseProgress } from "@/lib/worksheet";
+import { ProgressRing } from "@/components/ProgressRing";
 import { Button } from "@/components/ui/button";
 import { Loader2, Download, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -67,6 +68,13 @@ export default function WorksheetView() {
   const weeks = Number(data.weeks) || 9;
   const cellPad = "border border-slate-300 p-2 text-sm";
   const id_ = profile?.identitas || {};
+  const progress = computeCourseProgress(data.monitoring_mingguan);
+
+  const blockHasContent = (b) =>
+    (b.mata_kuliah || "").trim() ||
+    (b.rows || []).some((r) => Object.values(r).some((v) => (v ?? "").toString().trim()));
+  const planningBlocks = (data.target_mingguan || []).filter(blockHasContent);
+  const monitoringBlocks = (data.monitoring_mingguan || []).filter(blockHasContent);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
@@ -158,23 +166,22 @@ export default function WorksheetView() {
             </table>
           </div>
 
-          {/* 4 Target mingguan */}
-          <SectionTitle num="4" title="Target & Jadwal Belajar Mingguan (Monitoring)" />
-          {data.target_mingguan.map((block, bi) => (
+          {/* 4 Target mingguan (perencanaan) */}
+          <SectionTitle num="4" title="Target & Jadwal Belajar Mingguan" />
+          {planningBlocks.length === 0 ? (
+            <p className="text-sm text-slate-400 mb-4">-</p>
+          ) : planningBlocks.map((block, bi) => (
             <div key={bi} className="mb-6 print-break">
               <p className="text-sm font-semibold text-slate-800 mb-2">Mata Kuliah: {block.mata_kuliah || "-"}</p>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-xs">
                   <thead>
                     <tr className="bg-[#EAEAF2] text-[#404080]">
-                      <th className={`${cellPad} w-8`}>Mgg</th>
+                      <th className={`${cellPad} w-12`}>Minggu Ke-</th>
                       <th className={`${cellPad} text-left`}>Target Belajar</th>
-                      <th className={`${cellPad} w-12`}>Hal.</th>
-                      <th className={`${cellPad} w-12`}>Jam</th>
-                      <th className={`${cellPad} text-left`}>Media</th>
-                      <th className={`${cellPad} w-16`}>Tercapai</th>
-                      <th className={`${cellPad} text-left`}>Penyebab</th>
-                      <th className={`${cellPad} text-left`}>Solusi</th>
+                      <th className={`${cellPad} w-24`}>Jumlah Halaman Modul</th>
+                      <th className={`${cellPad} text-left`}>Media Belajar</th>
+                      <th className={`${cellPad} w-24`}>Lama Belajar (Jam)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -182,8 +189,65 @@ export default function WorksheetView() {
                       <tr key={ri}>
                         <td className={`${cellPad} text-center`}>{r.minggu || ""}</td>
                         <td className={cellPad}>{r.target || "-"}</td>
-                        <td className={`${cellPad} text-center`}>{r.halaman || ""}</td>
-                        <td className={`${cellPad} text-center`}>{r.waktu || ""}</td>
+                        <td className={`${cellPad} text-center`}>{r.halaman || "-"}</td>
+                        <td className={cellPad}>{r.media || "-"}</td>
+                        <td className={`${cellPad} text-center`}>{r.jam || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+
+          {/* 5 Monitoring mingguan */}
+          <SectionTitle num="5" title="Monitoring Jadwal Belajar Mingguan" />
+          {progress.length > 0 && (
+            <div className="mb-6 rounded-lg bg-[#F5F5FB] border border-slate-200 p-5 print-break">
+              <p className="font-heading font-bold text-slate-800 mb-4">Progres Belajar</p>
+              <div className="flex flex-wrap gap-6">
+                {progress.map((c, i) => (
+                  <div key={i} data-testid={`progress-ring-${i}`}>
+                    <ProgressRing pct={c.pct} label={c.mata_kuliah} sub={`${c.done}/${c.total} minggu`} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {monitoringBlocks.length === 0 ? (
+            <p className="text-sm text-slate-400 mb-4">-</p>
+          ) : monitoringBlocks.map((block, bi) => (
+            <div key={bi} className="mb-6 print-break">
+              <p className="text-sm font-semibold text-slate-800 mb-2">Mata Kuliah: {block.mata_kuliah || "-"}</p>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-[#EAEAF2] text-[#404080]">
+                      <th rowSpan={2} className={`${cellPad} w-8 align-middle`}>Mgg</th>
+                      <th rowSpan={2} className={`${cellPad} text-left align-middle`}>Target Belajar</th>
+                      <th colSpan={2} className={`${cellPad} text-center`}>Jumlah Halaman</th>
+                      <th colSpan={2} className={`${cellPad} text-center`}>Waktu Belajar</th>
+                      <th rowSpan={2} className={`${cellPad} text-left align-middle`}>Media</th>
+                      <th rowSpan={2} className={`${cellPad} w-14 align-middle`}>Ketercapaian</th>
+                      <th rowSpan={2} className={`${cellPad} text-left align-middle`}>Penyebab</th>
+                      <th rowSpan={2} className={`${cellPad} text-left align-middle`}>Solusi</th>
+                    </tr>
+                    <tr className="bg-[#EAEAF2] text-[#404080]">
+                      <th className={`${cellPad} w-12`}>Target</th>
+                      <th className={`${cellPad} w-12`}>Realisasi</th>
+                      <th className={`${cellPad} w-12`}>Target</th>
+                      <th className={`${cellPad} w-12`}>Realisasi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {block.rows.map((r, ri) => (
+                      <tr key={ri}>
+                        <td className={`${cellPad} text-center`}>{r.minggu || ""}</td>
+                        <td className={cellPad}>{r.target || "-"}</td>
+                        <td className={`${cellPad} text-center`}>{r.halaman_target || ""}</td>
+                        <td className={`${cellPad} text-center`}>{r.halaman_realisasi || ""}</td>
+                        <td className={`${cellPad} text-center`}>{r.waktu_target || ""}</td>
+                        <td className={`${cellPad} text-center`}>{r.waktu_realisasi || ""}</td>
                         <td className={cellPad}>{r.media || "-"}</td>
                         <td className={`${cellPad} text-center`}>{r.ketercapaian || "-"}</td>
                         <td className={cellPad}>{r.penyebab || "-"}</td>
@@ -196,8 +260,8 @@ export default function WorksheetView() {
             </div>
           ))}
 
-          {/* 5 SQ3R */}
-          <SectionTitle num="5" title="SQ3R — Survey · Questions · Read · Recite · Review" />
+          {/* 6 SQ3R */}
+          <SectionTitle num="6" title="SQ3R — Survey · Questions · Read · Recite · Review" />
           <div className="space-y-5">
             <div className="print-break">
               <p className="font-heading font-bold text-[#404080] mb-2">Survey</p>
@@ -233,8 +297,8 @@ export default function WorksheetView() {
             </div>
           </div>
 
-          {/* 6 Peta konsep */}
-          <SectionTitle num="6" title="Peta Konsep" />
+          {/* 7 Peta konsep */}
+          <SectionTitle num="7" title="Peta Konsep" />
           <p className="text-sm text-slate-800 whitespace-pre-wrap min-h-[80px]">{data.peta_konsep || "-"}</p>
 
           <div className="mt-10 pt-4 border-t border-slate-200 text-center text-xs text-slate-400">

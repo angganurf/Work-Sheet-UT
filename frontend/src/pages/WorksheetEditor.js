@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { cloneDeep, set as lodashSet } from "lodash";
 import api, { formatApiErrorDetail } from "@/lib/api";
 import { TopNav } from "@/components/TopNav";
-import { mergeWorksheetData, mergeProfile, courseOptions, isProfileComplete } from "@/lib/worksheet";
+import { mergeWorksheetData, mergeProfile, courseOptions, isProfileComplete, emptyPlanningRow, emptyMonitoringRow, computeCourseProgress } from "@/lib/worksheet";
+import { ProgressRing } from "@/components/ProgressRing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import {
   Loader2, Save, Eye, Plus, Trash2, Check, ArrowLeft, Minus,
-  BookOpen, CalendarDays, ClipboardList, Network, AlertTriangle, UserCog,
+  BookOpen, CalendarDays, ClipboardList, Network, AlertTriangle, UserCog, Activity, Gauge,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -184,6 +185,7 @@ export default function WorksheetEditor() {
   const weeks = Number(data.weeks) || 9;
   const options = courseOptions(profile);
   const profileOk = isProfileComplete(profile);
+  const progress = computeCourseProgress(data.monitoring_mingguan);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
@@ -296,13 +298,13 @@ export default function WorksheetEditor() {
             <AddRowButton onClick={() => upd("jadwal_semester", [...data.jadwal_semester, { mata_kuliah: "", minggu: Array(weeks).fill(""), catatan: "" }])} testid="js-add" label="Tambah Mata Kuliah" />
           </SectionCard>
 
-          {/* 4. Target mingguan (monitoring) */}
-          <SectionCard num="4" icon={ClipboardList} title="Target & Jadwal Belajar Mingguan" subtitle="Monitoring mandiri: pantau ketercapaian target belajar Anda tiap minggu">
+          {/* 4. Target & Jadwal Belajar Mingguan (perencanaan — Gambar 1) */}
+          <SectionCard num="4" icon={ClipboardList} title="Target & Jadwal Belajar Mingguan" subtitle="Rencana target belajar mingguan per mata kuliah">
             <div className="space-y-8">
               {data.target_mingguan.map((block, bi) => (
                 <div key={bi} className="border border-slate-200 rounded-md p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="flex-1"><CourseSelect value={block.mata_kuliah} onChange={(v) => upd(`target_mingguan[${bi}].mata_kuliah`, v)} options={options} testid={`tm-mk-${bi}`} /></div>
+                    <div className="flex-1"><CourseSelect value={block.mata_kuliah} onChange={(v) => upd(`target_mingguan[${bi}].mata_kuliah`, v)} options={options} testid={`pl-mk-${bi}`} /></div>
                     <Button type="button" variant="ghost" size="icon" onClick={() => upd("target_mingguan", data.target_mingguan.filter((_, idx) => idx !== bi))} disabled={data.target_mingguan.length === 1} className="text-slate-400 hover:text-red-500 shrink-0">
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -311,33 +313,22 @@ export default function WorksheetEditor() {
                     <table className="w-full border-collapse text-sm">
                       <thead>
                         <tr className="bg-[#EAEAF2] text-[#404080] text-xs">
-                          <th className="font-semibold p-2 w-12">Mgg</th>
-                          <th className="text-left font-semibold p-2 min-w-[160px]">Target Belajar</th>
-                          <th className="font-semibold p-2 w-20">Hal.</th>
-                          <th className="font-semibold p-2 w-20">Jam</th>
-                          <th className="text-left font-semibold p-2 min-w-[110px]">Media</th>
-                          <th className="font-semibold p-2 w-24">Tercapai?</th>
-                          <th className="text-left font-semibold p-2 min-w-[120px]">Penyebab</th>
-                          <th className="text-left font-semibold p-2 min-w-[120px]">Solusi</th>
+                          <th className="font-semibold p-2 w-14">Minggu Ke-</th>
+                          <th className="text-left font-semibold p-2 min-w-[200px]">Target Belajar</th>
+                          <th className="font-semibold p-2 w-32">Jumlah Halaman Modul</th>
+                          <th className="text-left font-semibold p-2 min-w-[130px]">Media Belajar</th>
+                          <th className="font-semibold p-2 w-32">Lama Belajar (Jam)</th>
                           <th className="w-8 p-2"></th>
                         </tr>
                       </thead>
                       <tbody>
                         {block.rows.map((r, ri) => (
                           <tr key={ri} className="border-t border-slate-200">
-                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center px-0`} value={r.minggu} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].minggu`, e.target.value)} data-testid={`tm-${bi}-${ri}-minggu`} /></td>
-                            <td className="p-1 border-r border-slate-100"><input className={cellInput} value={r.target} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].target`, e.target.value)} data-testid={`tm-${bi}-${ri}-target`} placeholder="Modul 1: …" /></td>
-                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center px-0`} value={r.halaman} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].halaman`, e.target.value)} /></td>
-                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center px-0`} value={r.waktu} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].waktu`, e.target.value)} /></td>
-                            <td className="p-1 border-r border-slate-100"><input className={cellInput} value={r.media} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].media`, e.target.value)} placeholder="Modul, Google" /></td>
-                            <td className="p-1 border-r border-slate-100">
-                              <Select value={r.ketercapaian || undefined} onValueChange={(v) => upd(`target_mingguan[${bi}].rows[${ri}].ketercapaian`, v)}>
-                                <SelectTrigger data-testid={`tm-${bi}-${ri}-tercapai`} className="h-8 border-0 shadow-none focus:ring-0 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
-                                <SelectContent><SelectItem value="Ya">Ya</SelectItem><SelectItem value="Tidak">Tidak</SelectItem></SelectContent>
-                              </Select>
-                            </td>
-                            <td className="p-1 border-r border-slate-100"><input className={cellInput} value={r.penyebab} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].penyebab`, e.target.value)} placeholder="-" /></td>
-                            <td className="p-1 border-r border-slate-100"><input className={cellInput} value={r.solusi} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].solusi`, e.target.value)} placeholder="-" /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center px-0`} value={r.minggu} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].minggu`, e.target.value)} data-testid={`pl-${bi}-${ri}-minggu`} /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={cellInput} value={r.target} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].target`, e.target.value)} data-testid={`pl-${bi}-${ri}-target`} placeholder="Modul 1: Pengenalan …" /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center`} value={r.halaman} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].halaman`, e.target.value)} data-testid={`pl-${bi}-${ri}-halaman`} placeholder="34 Halaman" /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={cellInput} value={r.media} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].media`, e.target.value)} data-testid={`pl-${bi}-${ri}-media`} placeholder="Modul, Google" /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center`} value={r.jam} onChange={(e) => upd(`target_mingguan[${bi}].rows[${ri}].jam`, e.target.value)} data-testid={`pl-${bi}-${ri}-jam`} placeholder="3 Jam" /></td>
                             <td className="p-1 text-center">
                               <button type="button" onClick={() => upd(`target_mingguan[${bi}].rows`, block.rows.filter((_, idx) => idx !== ri))} disabled={block.rows.length === 1} className="text-slate-300 hover:text-red-500 disabled:opacity-30">
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -348,17 +339,104 @@ export default function WorksheetEditor() {
                       </tbody>
                     </table>
                   </div>
-                  <AddRowButton onClick={() => upd(`target_mingguan[${bi}].rows`, [...block.rows, { minggu: "", target: "", halaman: "", waktu: "", media: "", ketercapaian: "", penyebab: "", solusi: "" }])} testid={`tm-${bi}-addrow`} />
+                  <AddRowButton onClick={() => upd(`target_mingguan[${bi}].rows`, [...block.rows, emptyPlanningRow()])} testid={`pl-${bi}-addrow`} />
                 </div>
               ))}
-              <Button type="button" variant="outline" onClick={() => upd("target_mingguan", [...data.target_mingguan, { mata_kuliah: "", rows: [{ minggu: "", target: "", halaman: "", waktu: "", media: "", ketercapaian: "", penyebab: "", solusi: "" }] }])} data-testid="tm-add-block" className="border-dashed border-slate-300 text-[#404080] hover:bg-[#EAEAF2]">
+              <Button type="button" variant="outline" onClick={() => upd("target_mingguan", [...data.target_mingguan, { mata_kuliah: "", rows: [emptyPlanningRow()] }])} data-testid="pl-add-block" className="border-dashed border-slate-300 text-[#404080] hover:bg-[#EAEAF2]">
                 <Plus className="w-4 h-4 mr-1.5" /> Tambah Blok Mata Kuliah
               </Button>
             </div>
           </SectionCard>
 
-          {/* 5. SQ3R */}
-          <SectionCard num="5" icon={BookOpen} title="SQ3R" subtitle="Survey · Questions · Read · Recite · Review">
+          {/* 5. Monitoring Jadwal Belajar Mingguan (Gambar 2) */}
+          <SectionCard num="5" icon={Activity} title="Monitoring Jadwal Belajar Mingguan" subtitle="Pantau ketercapaian target: target vs realisasi tiap minggu">
+            {/* Progres belajar */}
+            {progress.length > 0 && (
+              <div className="mb-6 rounded-lg bg-[#F5F5FB] border border-slate-200 p-5" data-testid="progress-panel">
+                <div className="flex items-center gap-2 mb-4">
+                  <Gauge className="w-4.5 h-4.5 text-[#404080]" />
+                  <h4 className="font-heading font-bold text-slate-800">Progres Belajar</h4>
+                  <span className="text-xs text-slate-400">(dari kolom Ketercapaian)</span>
+                </div>
+                <div className="flex flex-wrap gap-6">
+                  {progress.map((c, i) => (
+                    <div key={i} data-testid={`progress-ring-${i}`}>
+                      <ProgressRing pct={c.pct} label={c.mata_kuliah} sub={`${c.done}/${c.total} minggu`} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-8">
+              {data.monitoring_mingguan.map((block, bi) => (
+                <div key={bi} className="border border-slate-200 rounded-md p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex-1"><CourseSelect value={block.mata_kuliah} onChange={(v) => upd(`monitoring_mingguan[${bi}].mata_kuliah`, v)} options={options} testid={`mo-mk-${bi}`} /></div>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => upd("monitoring_mingguan", data.monitoring_mingguan.filter((_, idx) => idx !== bi))} disabled={data.monitoring_mingguan.length === 1} className="text-slate-400 hover:text-red-500 shrink-0">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="border border-slate-200 rounded-md overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-[#EAEAF2] text-[#404080] text-xs">
+                          <th rowSpan={2} className="font-semibold p-2 w-12 align-middle border-r border-white/60">Mgg Ke-</th>
+                          <th rowSpan={2} className="text-left font-semibold p-2 min-w-[160px] align-middle border-r border-white/60">Target Belajar</th>
+                          <th colSpan={2} className="font-semibold p-1.5 text-center border-b border-r border-white/60">Jumlah Halaman</th>
+                          <th colSpan={2} className="font-semibold p-1.5 text-center border-b border-r border-white/60">Waktu Belajar</th>
+                          <th rowSpan={2} className="text-left font-semibold p-2 min-w-[110px] align-middle border-r border-white/60">Media</th>
+                          <th rowSpan={2} className="font-semibold p-2 w-24 align-middle border-r border-white/60">Ketercapaian</th>
+                          <th rowSpan={2} className="text-left font-semibold p-2 min-w-[120px] align-middle border-r border-white/60">Penyebab Tidak Terlaksana</th>
+                          <th rowSpan={2} className="text-left font-semibold p-2 min-w-[110px] align-middle border-r border-white/60">Solusi</th>
+                          <th rowSpan={2} className="w-8 p-2"></th>
+                        </tr>
+                        <tr className="bg-[#EAEAF2] text-[#404080] text-[11px]">
+                          <th className="font-semibold p-1.5 w-16 border-l border-white/50">Target</th>
+                          <th className="font-semibold p-1.5 w-16 border-l border-r border-white/50">Realisasi</th>
+                          <th className="font-semibold p-1.5 w-16 border-l border-white/50">Target</th>
+                          <th className="font-semibold p-1.5 w-16 border-l border-r border-white/50">Realisasi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {block.rows.map((r, ri) => (
+                          <tr key={ri} className="border-t border-slate-200">
+                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center px-0`} value={r.minggu} onChange={(e) => upd(`monitoring_mingguan[${bi}].rows[${ri}].minggu`, e.target.value)} data-testid={`mo-${bi}-${ri}-minggu`} /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={cellInput} value={r.target} onChange={(e) => upd(`monitoring_mingguan[${bi}].rows[${ri}].target`, e.target.value)} data-testid={`mo-${bi}-${ri}-target`} placeholder="Pengenalan …" /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center px-0`} value={r.halaman_target} onChange={(e) => upd(`monitoring_mingguan[${bi}].rows[${ri}].halaman_target`, e.target.value)} data-testid={`mo-${bi}-${ri}-halt`} /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center px-0`} value={r.halaman_realisasi} onChange={(e) => upd(`monitoring_mingguan[${bi}].rows[${ri}].halaman_realisasi`, e.target.value)} data-testid={`mo-${bi}-${ri}-halr`} /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center px-0`} value={r.waktu_target} onChange={(e) => upd(`monitoring_mingguan[${bi}].rows[${ri}].waktu_target`, e.target.value)} data-testid={`mo-${bi}-${ri}-wt`} /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center px-0`} value={r.waktu_realisasi} onChange={(e) => upd(`monitoring_mingguan[${bi}].rows[${ri}].waktu_realisasi`, e.target.value)} data-testid={`mo-${bi}-${ri}-wr`} /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={cellInput} value={r.media} onChange={(e) => upd(`monitoring_mingguan[${bi}].rows[${ri}].media`, e.target.value)} data-testid={`mo-${bi}-${ri}-media`} placeholder="Modul, Google" /></td>
+                            <td className="p-1 border-r border-slate-100">
+                              <Select value={r.ketercapaian || undefined} onValueChange={(v) => upd(`monitoring_mingguan[${bi}].rows[${ri}].ketercapaian`, v)}>
+                                <SelectTrigger data-testid={`mo-${bi}-${ri}-tercapai`} className="h-8 border-0 shadow-none focus:ring-0 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                                <SelectContent><SelectItem value="Ya">Ya</SelectItem><SelectItem value="Tidak">Tidak</SelectItem></SelectContent>
+                              </Select>
+                            </td>
+                            <td className="p-1 border-r border-slate-100"><input className={cellInput} value={r.penyebab} onChange={(e) => upd(`monitoring_mingguan[${bi}].rows[${ri}].penyebab`, e.target.value)} data-testid={`mo-${bi}-${ri}-penyebab`} placeholder="-" /></td>
+                            <td className="p-1 border-r border-slate-100"><input className={cellInput} value={r.solusi} onChange={(e) => upd(`monitoring_mingguan[${bi}].rows[${ri}].solusi`, e.target.value)} data-testid={`mo-${bi}-${ri}-solusi`} placeholder="-" /></td>
+                            <td className="p-1 text-center">
+                              <button type="button" onClick={() => upd(`monitoring_mingguan[${bi}].rows`, block.rows.filter((_, idx) => idx !== ri))} disabled={block.rows.length === 1} className="text-slate-300 hover:text-red-500 disabled:opacity-30">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <AddRowButton onClick={() => upd(`monitoring_mingguan[${bi}].rows`, [...block.rows, emptyMonitoringRow()])} testid={`mo-${bi}-addrow`} />
+                </div>
+              ))}
+              <Button type="button" variant="outline" onClick={() => upd("monitoring_mingguan", [...data.monitoring_mingguan, { mata_kuliah: "", rows: [emptyMonitoringRow()] }])} data-testid="mo-add-block" className="border-dashed border-slate-300 text-[#404080] hover:bg-[#EAEAF2]">
+                <Plus className="w-4 h-4 mr-1.5" /> Tambah Blok Mata Kuliah
+              </Button>
+            </div>
+          </SectionCard>
+
+          {/* 6. SQ3R */}
+          <SectionCard num="6" icon={BookOpen} title="SQ3R" subtitle="Survey · Questions · Read · Recite · Review">
             <div className="space-y-6">
               <div className="border-l-4 border-[#404080] pl-4 py-1">
                 <h4 className="font-heading font-bold text-[#404080] mb-3">Survey <span className="font-normal text-slate-400 text-xs">(3–5 menit)</span></h4>
@@ -422,8 +500,8 @@ export default function WorksheetEditor() {
             </div>
           </SectionCard>
 
-          {/* 6. Peta konsep */}
-          <SectionCard num="6" icon={Network} title="Peta Konsep">
+          {/* 7. Peta konsep */}
+          <SectionCard num="7" icon={Network} title="Peta Konsep">
             <AreaField label="Peta Konsep" value={data.peta_konsep} onChange={(v) => upd("peta_konsep", v)} rows={6} testid="peta-konsep" placeholder="Tuliskan peta konsep / poin-poin utama secara terstruktur…" />
           </SectionCard>
 

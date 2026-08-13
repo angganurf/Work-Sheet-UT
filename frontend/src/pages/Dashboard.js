@@ -4,7 +4,7 @@ import api, { formatApiErrorDetail } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { StatCard } from "@/components/StatCard";
-import { isProfileComplete } from "@/lib/worksheet";
+import { isProfileComplete, overallProgress, buildReminders, dayName } from "@/lib/worksheet";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus, FileText, Loader2, Pencil, Eye, Trash2, Calendar,
-  LayoutGrid, BookOpen, Clock, Library, UserCog, AlertTriangle,
+  LayoutGrid, BookOpen, Clock, Library, UserCog, AlertTriangle, Gauge, Bell, CalendarClock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -79,15 +79,19 @@ export default function Dashboard() {
     list.forEach((w) => {
       (w.data?.target_mingguan || []).forEach((b) =>
         (b.rows || []).forEach((r) => {
-          const n = parseFloat(String(r.waktu).replace(",", "."));
+          const n = parseFloat(String(r.jam ?? r.waktu).replace(",", "."));
           if (!isNaN(n)) jam += n;
         })
       );
     });
     const mkCount = (profile?.mata_kuliah || []).filter((m) => (m.nama || "").trim()).length;
-    const last = list.length ? list[0].updated_at : null;
-    return { total: list.length, mkCount, jam, last };
+    return { total: list.length, mkCount, jam, pct: overallProgress(list) };
   }, [worksheets, profile]);
+
+  const reminders = useMemo(() => buildReminders(worksheets || []), [worksheets]);
+  const todayIdx = new Date().getDay();
+  const todayItems = reminders[todayIdx] || [];
+  const reminderDays = Object.keys(reminders).map(Number).sort((a, b) => a - b);
 
   const profileOk = isProfileComplete(profile);
 
@@ -126,9 +130,52 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard icon={FileText} label="Total Lembar Kerja" value={worksheets ? stats.total : "—"} caption="Rencana belajar yang Anda buat" testid="stat-total" />
         <StatCard icon={Library} label="Mata Kuliah" value={profile ? stats.mkCount : "—"} caption="MK diregistrasi (dari profil)" testid="stat-mk" />
-        <StatCard icon={Clock} label="Jam Belajar" value={worksheets ? `${stats.jam}` : "—"} caption="Akumulasi target jam mingguan" testid="stat-jam" />
-        <StatCard icon={Calendar} label="Pembaruan Terakhir" value={worksheets && stats.last ? formatDate(stats.last).split(" ").slice(0, 2).join(" ") : "—"} caption="Aktivitas terbaru Anda" testid="stat-last" />
+        <StatCard icon={Clock} label="Jam Belajar" value={worksheets ? `${stats.jam}` : "—"} caption="Akumulasi rencana jam mingguan" testid="stat-jam" />
+        <StatCard icon={Gauge} label="Ketercapaian" value={worksheets ? `${stats.pct}%` : "—"} caption="Rata-rata dari tabel monitoring" testid="stat-progress" />
       </div>
+
+      {/* Reminder card */}
+      {worksheets && reminderDays.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-8" data-testid="reminder-card">
+          <div className="flex items-center gap-2 mb-1">
+            <Bell className="w-5 h-5 text-[#404080]" />
+            <h3 className="font-heading font-bold text-slate-800">Pengingat Belajar</h3>
+          </div>
+          <p className="text-xs text-slate-400 mb-4">Berdasarkan hari pada kolom "Catatan (Waktu)" di jadwal per semester Anda</p>
+
+          <div className={`rounded-lg p-4 mb-4 border ${todayItems.length ? "bg-[#EAEAF2] border-[#c9c9e6]" : "bg-slate-50 border-slate-200"}`} data-testid="reminder-today">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#404080] mb-2">
+              Hari ini · {dayName(todayIdx)}
+            </p>
+            {todayItems.length ? (
+              <div className="flex flex-wrap gap-2">
+                {todayItems.map((it, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 bg-white border border-[#c9c9e6] text-[#404080] text-sm font-medium px-3 py-1.5 rounded-full">
+                    <BookOpen className="w-3.5 h-3.5" /> {it.mata_kuliah}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">Tidak ada jadwal belajar terjadwal hari ini. Tetap semangat! 🎯</p>
+            )}
+          </div>
+
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-2">Jadwal Mingguan</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {reminderDays.map((d) => (
+              <div key={d} className={`flex items-start gap-2.5 rounded-md border p-3 ${d === todayIdx ? "border-[#404080] bg-[#F5F5FB]" : "border-slate-100"}`} data-testid={`reminder-day-${d}`}>
+                <CalendarClock className={`w-4 h-4 mt-0.5 shrink-0 ${d === todayIdx ? "text-[#404080]" : "text-slate-400"}`} />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">{dayName(d)}</p>
+                  <p className="text-xs text-slate-500 leading-snug">
+                    {[...new Set(reminders[d].map((x) => x.mata_kuliah))].join(", ")}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">

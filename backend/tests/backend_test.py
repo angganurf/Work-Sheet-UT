@@ -414,6 +414,45 @@ class TestProfile:
         assert got["peta_konsep"] == "peta"
         sess.delete(f"{API}/worksheets/{wid}", headers=h(token))
 
+    def test_planning_and_monitoring_mingguan_round_trip(self, sess):
+        """Iteration 4: data.target_mingguan (planning) + data.monitoring_mingguan round-trip verbatim."""
+        _, token, _ = register_student(sess, "mg")
+        wid = sess.post(f"{API}/worksheets", headers=h(token), json={"title": "TEST_ws_mingguan"}).json()["id"]
+        data = {
+            "semester": "1",
+            "weeks": 9,
+            "jadwal_semester": [{"mata_kuliah": "Sistem Operasi (3)", "minggu": ["1"] * 9, "catatan": "Senin dan Rabu"}],
+            "target_mingguan": [{"mata_kuliah": "Sistem Operasi (3)", "rows": [
+                {"minggu": "1", "target": "Modul 1", "halaman": "34 Halaman", "media": "Modul, Google", "jam": "3"},
+                {"minggu": "2", "target": "Modul 2", "halaman": "20 Halaman", "media": "BMP", "jam": "2"},
+            ]}],
+            "monitoring_mingguan": [{"mata_kuliah": "Sistem Operasi (3)", "rows": [
+                {"minggu": "1", "target": "Pengenalan", "halaman_target": "34", "halaman_realisasi": "34",
+                 "waktu_target": "3", "waktu_realisasi": "3", "media": "Modul", "ketercapaian": "Ya",
+                 "penyebab": "-", "solusi": "-"},
+                {"minggu": "2", "target": "Proses", "halaman_target": "20", "halaman_realisasi": "10",
+                 "waktu_target": "2", "waktu_realisasi": "1", "media": "Google", "ketercapaian": "Tidak",
+                 "penyebab": "Sibuk", "solusi": "Tambah jam"},
+            ]}],
+        }
+        r = sess.put(f"{API}/worksheets/{wid}", headers=h(token), json={"data": data})
+        assert r.status_code == 200, r.text
+        got = sess.get(f"{API}/worksheets/{wid}", headers=h(token)).json()["data"]
+        pl = got["target_mingguan"][0]
+        assert pl["mata_kuliah"] == "Sistem Operasi (3)"
+        assert len(pl["rows"]) == 2
+        assert pl["rows"][0] == data["target_mingguan"][0]["rows"][0]
+        assert pl["rows"][1]["jam"] == "2"
+        mo = got["monitoring_mingguan"][0]
+        assert len(mo["rows"]) == 2
+        assert mo["rows"][0]["ketercapaian"] == "Ya"
+        assert mo["rows"][1]["ketercapaian"] == "Tidak"
+        assert mo["rows"][1]["halaman_realisasi"] == "10"
+        assert mo["rows"][1]["waktu_realisasi"] == "1"
+        assert mo["rows"][1]["penyebab"] == "Sibuk"
+        assert got["jadwal_semester"][0]["catatan"] == "Senin dan Rabu"
+        sess.delete(f"{API}/worksheets/{wid}", headers=h(token))
+
 
 # ---------------- CORS ----------------
 class TestCors:

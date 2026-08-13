@@ -1,0 +1,38 @@
+{
+  "summary": "Iteration 4 e2e test of the new Section 4 planning table, Section 5 monitoring table, Progres Belajar rings, and dashboard Pengingat Belajar. Backend: 36 pytest tests (auth/lockout/bcrypt/cookie/CORS, worksheet CRUD, isolation, malformed-id 404, admin, profile) INCLUDING a new test_planning_and_monitoring_mingguan_round_trip that verifies data.target_mingguan (minggu/target/halaman/media/jam) and data.monitoring_mingguan (halaman_target/realisasi, waktu_target/realisasi, ketercapaian Ya/Tidak, penyebab, solusi) round-trip verbatim through PUT+GET — 36/36 PASSED. Frontend (real UI, public URL): student login 0666652216 -> dashboard (stat-total/mk/jam/progress all render), created worksheet, Section 3 course select + Catatan 'Setiap Senin dan Rabu malam', Section 4 header exactly 'Minggu Ke- | Target Belajar | Jumlah Halaman Modul | Media Belajar | Lama Belajar (Jam)', pl-mk-0 populated from profile, pl-0-addrow + pl-add-block work, Section 5 grouped header verified ('Jumlah Halaman'/'Waktu Belajar' over Target/Realisasi), all 10 monitoring cells fill, Ketercapaian radix Select (Ya/Tidak) works, mo-0-addrow + mo-add-block work. progress-panel/progress-ring-0 showed 67% with 2/3 for 2 Ya + 1 Tidak (exactly round(2/3*100)). Save -> reload: every checked planning/monitoring/catatan value and both added blocks persisted; ring still 67%. Dashboard: stat-progress became 67%, stat-jam 5 (3+2), reminder-card rendered with reminder-day-1 (Senin) and reminder-day-3 (Rabu) both listing 'Sistem Operasi (3)', reminder-today correctly said no schedule for Kamis (today). Preview (worksheet-view) rendered sections 4,5,6,7 with the grouped Target/Realisasi headers, Progres Belajar 67%, monitoring values, and download-pdf-button. Regression: admin login -> /admin, search by NIM, admin-view of student worksheet shows identitas + all 7 sections; admin blocked from /dashboard (stays /admin); student blocked from /admin -> /dashboard; delete via confirm dialog removed the card and recomputed stat-progress to 0% and hid reminder-card; logout works. No console errors. No blocking defects.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/worksheets", "issue": "data is an untyped dict — target_mingguan/monitoring_mingguan are stored verbatim with no schema validation (pre-existing design choice, noted again)."},
+      {"endpoint": "CORS middleware", "issue": "CORS_ORIGINS='*' with allow_credentials=True; Starlette echoes origin so tests pass, explicit origin list still safer."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "WorksheetEditor Section 5 + WorksheetView Progres Belajar", "issues": ["ProgressRing label is truncated: renders 'Sistem Operasi (3) · ...' so the done/total (2/3) is never visible. Widen the ring container or wrap the label (put the course name on one line and the x/y count on a second line)."]},
+      {"screen": "WorksheetView (preview/PDF)", "issues": ["Empty planning/monitoring blocks added via 'Tambah Blok Mata Kuliah' but left blank are printed as 'Mata Kuliah: -' with an all-dashes row. The read-only/PDF view should skip blocks that have no course name and no filled cells."]},
+      {"screen": "WorksheetView", "issues": ["Progress rings in the view have no data-testid (editor has progress-ring-N); add matching testids for testability."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Fix ProgressRing label truncation so '· done/total' is readable (editor + preview/PDF).",
+    "Optional: hide fully-empty planning/monitoring blocks in WorksheetView so the PDF has no dash-only rows.",
+    "Optional: add data-testid=progress-ring-N to WorksheetView rings."
+  ],
+  "critical_code_review_comments": [
+    "Dashboard stat 'Jam Belajar' does parseFloat(String(r.jam ?? r.waktu)) — for legacy rows storing '2 jam' this silently parses 2, acceptable, but new planning rows accept free text like '3 Jam' too, so the accumulated number is best-effort only. Consider a numeric input for Lama Belajar (Jam).",
+    "computeCourseProgress skips blocks whose mata_kuliah is blank, so monitoring rows filled before picking a course contribute nothing to progress/stat-progress with no user hint. A small note or validation would help.",
+    "parseDays uses substring matching on the whole Catatan text, so a word containing a day substring would create a false reminder (low risk in Indonesian, but word-boundary regex would be safer)."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Created worksheet 'QA Iter4 Worksheet' for student 0666652216 during the test and deleted it in the delete-regression step (dashboard back to 3 worksheets). pytest TEST_* users/worksheets auto-cleaned by session fixture.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "Admin admin/admin123 (verified). Student 0666652216/student123 (verified). No failed logins issued, no lockout triggered.",
+  "context_for_next_testing_agent": "Login testids are login-nim-input / login-password-input / login-submit-button (NOT nim-input). Run backend: cd /app/backend && python -m pytest tests/backend_test.py (36 tests, all pass; new mingguan round-trip test lives in class TestProfile). Frontend flows verified this iteration: login, stats, worksheet create, Section 3/4/5 fill + radix Ketercapaian select, progress ring math (2 Ya + 1 Tidak = 67%), save+reload persistence incl. added blocks, dashboard stat-progress + reminder-card (day parsing from Catatan), preview sections 4-7 + download-pdf-button, admin search/view, RBAC both directions, delete, logout. Remaining findings are cosmetic (ring label truncation, blank blocks printed in the PDF view).",
+  "rca_of_the_issue": "N/A — no functional defect reproduced. The only findings are CSS truncation of the ProgressRing label and blank-block rendering in the read-only view."
+}
