@@ -154,6 +154,15 @@ body {
 .dark .border-neutral-900 { border-color: #fafafa !important; }
 .dark .text-neutral-300 { color: #52525b !important; }
 .dark .bg-rose-100 { background-color: rgba(244, 63, 94, 0.16) !important; }
+/* Alert banners readable in dark */
+.dark .bg-rose-50 { background-color: rgba(244, 63, 94, 0.12) !important; }
+.dark .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.12) !important; }
+.dark .bg-amber-50 { background-color: rgba(245, 158, 11, 0.12) !important; }
+.dark .border-rose-200 { border-color: rgba(244, 63, 94, 0.30) !important; }
+.dark .border-emerald-200 { border-color: rgba(16, 185, 129, 0.30) !important; }
+.dark .text-rose-800, .dark .text-rose-700 { color: #fda4af !important; }
+.dark .text-emerald-800 { color: #6ee7b7 !important; }
+.dark .text-amber-800 { color: #fcd34d !important; }
 
 /* Keep the hero (brand gradient) dark with white text even in dark mode */
 .dark .bg-brand-gradient { background-image: linear-gradient(135deg, #1c1c1c 0%, #0a0a0a 60%, #000000 100%) !important; }

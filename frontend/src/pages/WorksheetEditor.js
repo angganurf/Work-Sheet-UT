@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   Loader2, Save, Eye, Plus, Trash2, Check, ArrowLeft, Minus, Copy,
-  BookOpen, CalendarDays, ClipboardList, Network, AlertTriangle, UserCog, Activity, Gauge,
+  BookOpen, CalendarDays, ClipboardList, Network, AlertTriangle, UserCog, Activity, Gauge, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -188,6 +188,18 @@ export default function WorksheetEditor() {
   }
 
   const weeks = Number(data.weeks) || 9;
+  // Summary of weeks with no study hours (0/empty across ALL courses).
+  const jadwalRows = data.jadwal_semester || [];
+  const emptyWeekNums = [];
+  for (let w = 0; w < weeks; w++) {
+    const anyHours = jadwalRows.length > 0 && jadwalRows.some((r) => !isNoStudy(r.minggu?.[w]));
+    if (!anyHours) emptyWeekNums.push(w + 1);
+  }
+  const perCourseEmpty = jadwalRows.map((r) => {
+    let empty = 0;
+    for (let w = 0; w < weeks; w++) if (isNoStudy(r.minggu?.[w])) empty++;
+    return empty;
+  });
   const options = courseOptions(profile);
   const profileOk = isProfileComplete(profile);
   const progress = computeCourseProgress(data.target_mingguan);
@@ -282,6 +294,37 @@ export default function WorksheetEditor() {
                 </tbody>
               </table>
             </div>
+            {jadwalRows.length > 0 && (
+              emptyWeekNums.length === 0 ? (
+                <div className="mt-4 flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3" data-testid="empty-weeks-summary">
+                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 shrink-0" />
+                  <p className="text-sm text-emerald-800">Mantap! Semua <b>{weeks} minggu</b> sudah memiliki jam belajar. 🎉</p>
+                </div>
+              ) : (
+                <div className="mt-4 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3" data-testid="empty-weeks-summary">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-4.5 h-4.5 text-rose-500 shrink-0 mt-0.5" />
+                    <div className="text-sm text-rose-800">
+                      <p><b>{emptyWeekNums.length} dari {weeks} minggu</b> belum ada jam belajar sama sekali &mdash; yuk atur waktumu agar tidak ada minggu yang terlewat.</p>
+                      <div className="flex flex-wrap gap-1.5 mt-2" data-testid="empty-week-chips">
+                        {emptyWeekNums.map((n) => (
+                          <span key={n} className="inline-flex items-center justify-center min-w-[26px] h-6 px-2 rounded-full bg-rose-100 text-rose-700 text-xs font-semibold">M{n}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  {perCourseEmpty.some((c) => c > 0) && (
+                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-rose-200/70">
+                      {jadwalRows.map((r, i) => (r.mata_kuliah || "").trim() && perCourseEmpty[i] > 0 ? (
+                        <span key={i} className="text-xs text-rose-700 bg-white/60 border border-rose-200 rounded-full px-2.5 py-1">
+                          {r.mata_kuliah}: <b>{perCourseEmpty[i]}</b> minggu kosong
+                        </span>
+                      ) : null)}
+                    </div>
+                  )}
+                </div>
+              )
+            )}
             <AddRowButton onClick={() => upd("jadwal_semester", [...data.jadwal_semester, { mata_kuliah: "", minggu: Array(weeks).fill(""), catatan: "" }])} testid="js-add" label="Tambah Mata Kuliah" />
           </SectionCard>
 
