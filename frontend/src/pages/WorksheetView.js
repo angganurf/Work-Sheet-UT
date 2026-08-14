@@ -17,7 +17,7 @@ const Row = ({ label, value }) => (
 );
 
 const SectionTitle = ({ num, title }) => (
-  <h3 className="font-heading font-bold text-[#4F46E5] text-lg border-b-2 border-[#4F46E5] pb-1.5 mb-4 mt-8">{num}. {title}</h3>
+  <h3 className="font-heading font-bold text-[#0A0A0A] text-lg border-b-2 border-[#0A0A0A] pb-1.5 mb-4 mt-8">{num}. {title}</h3>
 );
 
 const Bullets = ({ items }) => {
@@ -51,7 +51,7 @@ export default function WorksheetView() {
   }, [id, navigate]);
 
   if (loading || !data) {
-    return (<div className="min-h-screen bg-[#F7F7FB]"><TopNav /><div className="flex items-center justify-center py-32"><Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" /></div></div>);
+    return (<div className="min-h-screen bg-[#F7F7FB]"><TopNav /><div className="flex items-center justify-center py-32"><Loader2 className="w-8 h-8 animate-spin text-[#0A0A0A]" /></div></div>);
   }
 
   const weeks = Number(data.weeks) || 9;
@@ -66,14 +66,14 @@ export default function WorksheetView() {
   return (
     <div className="min-h-screen bg-[#F7F7FB]">
       <TopNav right={
-        <Button size="sm" onClick={() => window.print()} data-testid="download-pdf-button" className="bg-[#4F46E5] hover:bg-[#4338CA] text-white"><Download className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Unduh PDF</span></Button>
+        <Button size="sm" onClick={() => window.print()} data-testid="download-pdf-button" className="bg-[#0A0A0A] hover:bg-[#000000] text-white"><Download className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Unduh PDF</span></Button>
       } />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <button onClick={() => navigate(-1)} className="no-print flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#4F46E5] mb-5 transition-colors" data-testid="view-back-button"><ArrowLeft className="w-4 h-4" /> Kembali</button>
+        <button onClick={() => navigate(-1)} className="no-print flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0A0A0A] mb-5 transition-colors" data-testid="view-back-button"><ArrowLeft className="w-4 h-4" /> Kembali</button>
 
         <div className="print-container bg-white border border-slate-200 rounded-lg shadow-sm p-8 md:p-12" data-testid="worksheet-view">
-          <div className="text-center border-b-2 border-[#4F46E5] pb-4 mb-6">
-            <p className="font-heading font-black text-[#4F46E5] text-2xl tracking-tight">UNIVERSITAS TERBUKA</p>
+          <div className="text-center border-b-2 border-[#0A0A0A] pb-4 mb-6">
+            <p className="font-heading font-black text-[#0A0A0A] text-2xl tracking-tight">UNIVERSITAS TERBUKA</p>
             <p className="text-sm text-slate-500 uppercase tracking-[0.15em] mt-1">Lembar Kerja Pelatihan Belajar Mandiri</p>
             <p className="text-xs text-slate-400 mt-0.5">Tahun 2026 · {ws?.title}</p>
           </div>
@@ -93,7 +93,7 @@ export default function WorksheetView() {
           <div className="mb-4"><Bullets items={profile?.target_belajar} /></div>
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Mata Kuliah yang Diregistrasi</p>
           <table className="w-full border-collapse mb-2">
-            <thead><tr className="bg-[#E0E7FF] text-[#4F46E5]"><th className={`${cellPad} text-left w-32`}>Kode MK</th><th className={`${cellPad} text-left`}>Nama MK</th><th className={`${cellPad} text-left w-16`}>SKS</th></tr></thead>
+            <thead><tr className="bg-[#F4F4F5] text-[#0A0A0A]"><th className={`${cellPad} text-left w-32`}>Kode MK</th><th className={`${cellPad} text-left`}>Nama MK</th><th className={`${cellPad} text-left w-16`}>SKS</th></tr></thead>
             <tbody>{(profile?.mata_kuliah || []).map((mk, i) => <tr key={i}><td className={cellPad}>{mk.kode || "-"}</td><td className={cellPad}>{mk.nama || "-"}</td><td className={cellPad}>{mk.sks || "-"}</td></tr>)}</tbody>
           </table>
 
@@ -103,8 +103,8 @@ export default function WorksheetView() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse mb-2">
               <thead>
-                <tr className="bg-[#E0E7FF] text-[#4F46E5]"><th rowSpan={2} className={`${cellPad} text-left align-middle`}>Mata Kuliah</th><th colSpan={weeks} className={`${cellPad} text-center`}>Minggu ke- (Jumlah Jam)</th><th rowSpan={2} className={`${cellPad} text-left align-middle`}>Catatan</th></tr>
-                <tr className="bg-[#E0E7FF] text-[#4F46E5]">{Array.from({ length: weeks }).map((_, w) => <th key={w} className={`${cellPad} text-center w-8`}>{w + 1}</th>)}</tr>
+                <tr className="bg-[#F4F4F5] text-[#0A0A0A]"><th rowSpan={2} className={`${cellPad} text-left align-middle`}>Mata Kuliah</th><th colSpan={weeks} className={`${cellPad} text-center`}>Minggu ke- (Jumlah Jam)</th><th rowSpan={2} className={`${cellPad} text-left align-middle`}>Catatan</th></tr>
+                <tr className="bg-[#F4F4F5] text-[#0A0A0A]">{Array.from({ length: weeks }).map((_, w) => <th key={w} className={`${cellPad} text-center w-8`}>{w + 1}</th>)}</tr>
               </thead>
               <tbody>{data.jadwal_semester.map((row, i) => <tr key={i}><td className={cellPad}>{row.mata_kuliah || "-"}</td>{Array.from({ length: weeks }).map((_, w) => <td key={w} className={`${cellPad} text-center`}>{row.minggu[w] || ""}</td>)}<td className={cellPad}>{row.catatan || "-"}</td></tr>)}</tbody>
             </table>
@@ -117,7 +117,7 @@ export default function WorksheetView() {
               <p className="text-sm font-semibold text-slate-800 mb-2">Mata Kuliah: {block.mata_kuliah || "-"}</p>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-xs">
-                  <thead><tr className="bg-[#E0E7FF] text-[#4F46E5]"><th className={`${cellPad} w-12`}>Minggu Ke-</th><th className={`${cellPad} text-left`}>Target Belajar</th><th className={`${cellPad} w-24`}>Jumlah Halaman Modul</th><th className={`${cellPad} text-left`}>Media Belajar</th><th className={`${cellPad} w-24`}>Lama Belajar (Jam)</th></tr></thead>
+                  <thead><tr className="bg-[#F4F4F5] text-[#0A0A0A]"><th className={`${cellPad} w-12`}>Minggu Ke-</th><th className={`${cellPad} text-left`}>Target Belajar</th><th className={`${cellPad} w-24`}>Jumlah Halaman Modul</th><th className={`${cellPad} text-left`}>Media Belajar</th><th className={`${cellPad} w-24`}>Lama Belajar (Jam)</th></tr></thead>
                   <tbody>{block.rows.map((r, ri) => <tr key={ri}><td className={`${cellPad} text-center`}>{r.minggu || ""}</td><td className={cellPad}>{r.target || "-"}</td><td className={`${cellPad} text-center`}>{r.halaman || "-"}</td><td className={cellPad}>{r.media || "-"}</td><td className={`${cellPad} text-center`}>{r.jam || "-"}</td></tr>)}</tbody>
                 </table>
               </div>
@@ -127,7 +127,7 @@ export default function WorksheetView() {
           {/* 5 Hasil Monitoring & SQ3R */}
           <SectionTitle num="5" title="Hasil Monitoring & SQ3R" />
           {progress.length > 0 && (
-            <div className="mb-6 rounded-lg bg-[#EEF2FF] border border-slate-200 p-5 print-break">
+            <div className="mb-6 rounded-lg bg-[#FAFAFA] border border-slate-200 p-5 print-break">
               <p className="font-heading font-bold text-slate-800 mb-4">Progres Belajar</p>
               <div className="flex flex-wrap gap-6">{progress.map((c, i) => <div key={i} data-testid={`progress-ring-${i}`}><ProgressRing pct={c.pct} label={c.mata_kuliah} sub={`${c.done}/${c.total} minggu`} /></div>)}</div>
             </div>
@@ -136,16 +136,16 @@ export default function WorksheetView() {
             <div key={i} className="mb-5 border border-slate-200 rounded-md overflow-hidden print-break">
               <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 text-sm">
                 <span className="font-heading font-bold text-slate-800">{res.mata_kuliah || "Mata kuliah"}</span>
-                {res.minggu && <span className="ml-2 text-xs text-[#4F46E5]">Minggu {res.minggu}</span>}
+                {res.minggu && <span className="ml-2 text-xs text-[#0A0A0A]">Minggu {res.minggu}</span>}
                 {res.target && <span className="ml-2 text-xs text-slate-500">· {res.target}</span>}
               </div>
               <div className="p-4 space-y-4">
                 {res.monitoring?.enabled && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-[#4F46E5] mb-2">Monitoring</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">Monitoring</p>
                     <table className="w-full border-collapse text-xs">
-                      <thead><tr className="bg-[#E0E7FF] text-[#4F46E5]"><th colSpan={2} className={`${cellPad} text-center`}>Jumlah Halaman</th><th colSpan={2} className={`${cellPad} text-center`}>Waktu Belajar</th><th className={cellPad}>Media</th><th className={cellPad}>Ketercapaian</th><th className={cellPad}>Penyebab</th><th className={cellPad}>Solusi</th></tr>
-                        <tr className="bg-[#E0E7FF] text-[#4F46E5]"><th className={cellPad}>Target</th><th className={cellPad}>Realisasi</th><th className={cellPad}>Target</th><th className={cellPad}>Realisasi</th><th className={cellPad}></th><th className={cellPad}></th><th className={cellPad}></th><th className={cellPad}></th></tr>
+                      <thead><tr className="bg-[#F4F4F5] text-[#0A0A0A]"><th colSpan={2} className={`${cellPad} text-center`}>Jumlah Halaman</th><th colSpan={2} className={`${cellPad} text-center`}>Waktu Belajar</th><th className={cellPad}>Media</th><th className={cellPad}>Ketercapaian</th><th className={cellPad}>Penyebab</th><th className={cellPad}>Solusi</th></tr>
+                        <tr className="bg-[#F4F4F5] text-[#0A0A0A]"><th className={cellPad}>Target</th><th className={cellPad}>Realisasi</th><th className={cellPad}>Target</th><th className={cellPad}>Realisasi</th><th className={cellPad}></th><th className={cellPad}></th><th className={cellPad}></th><th className={cellPad}></th></tr>
                       </thead>
                       <tbody><tr>
                         <td className={`${cellPad} text-center`}>{res.monitoring.halaman_target || "-"}</td><td className={`${cellPad} text-center`}>{res.monitoring.halaman_realisasi || "-"}</td>
@@ -157,7 +157,7 @@ export default function WorksheetView() {
                 )}
                 {res.sq3r?.enabled && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-[#4F46E5] mb-2">SQ3R</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">SQ3R</p>
                     <div className="text-sm">
                       <p className="font-semibold text-slate-700 mt-1 mb-1">Survey</p>
                       <Row label="Judul BMP" value={res.sq3r.survey.judul_bmp} /><Row label="Penulis BMP" value={res.sq3r.survey.penulis_bmp} /><Row label="Judul Modul" value={res.sq3r.survey.judul_modul} /><Row label="Jumlah Halaman" value={res.sq3r.survey.jumlah_halaman} />

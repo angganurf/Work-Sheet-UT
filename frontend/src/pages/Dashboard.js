@@ -1,30 +1,45 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import api, { formatApiErrorDetail } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { StatCard } from "@/components/StatCard";
-import { isProfileComplete, overallProgress, buildReminders, dayName } from "@/lib/worksheet";
-import { computeStreak, computeBadges, motivationMessage } from "@/lib/gamification";
+import { ProgressRing } from "@/components/ProgressRing";
+import { isProfileComplete, overallProgress, buildReminders, computeCourseProgress } from "@/lib/worksheet";
+import { computeStreak } from "@/lib/gamification";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Plus, FileText, Loader2, Pencil, Eye, Trash2, Calendar,
-  LayoutGrid, BookOpen, Clock, Library, UserCog, AlertTriangle, Gauge, Bell, CalendarClock,
-  Flame, Sparkles, Award,
+  Plus, FileText, Loader2, Trash2, Clock, Bookmark, Flame, Check, Calendar,
+  Settings, BookOpen, PenSquare, Target, User, ChevronRight, GraduationCap,
+  AlertTriangle, LayoutGrid, ArrowUpRight,
 } from "lucide-react";
 import { toast } from "sonner";
+
+const DAY_LABELS = ["Sen", "Sel", "Rab", "Kam", "Jum"]; // Mon..Fri
 
 function formatDate(iso) {
   if (!iso) return "-";
   try {
-    return new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-  } catch {
-    return "-";
-  }
+    return new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  } catch { return "-"; }
+}
+
+function worksheetPct(w) {
+  const cs = computeCourseProgress(w.data?.target_mingguan);
+  let done = 0, total = 0;
+  cs.forEach((c) => { done += c.done; total += c.total; });
+  return total ? Math.round((done / total) * 100) : 0;
+}
+
+function worksheetSubtitle(w) {
+  const course =
+    (w.data?.target_mingguan || []).find((b) => (b.mata_kuliah || "").trim())?.mata_kuliah ||
+    (w.data?.jadwal_semester || []).find((r) => (r.mata_kuliah || "").trim())?.mata_kuliah ||
+    "Rencana Belajar";
+  return `${course} • ${w.data?.semester || "Belajar Mandiri"}`;
 }
 
 export default function Dashboard() {
@@ -34,6 +49,7 @@ export default function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [creating, setCreating] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [query, setQuery] = useState("");
 
   const load = async () => {
     try {
@@ -46,9 +62,7 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const handleCreate = async () => {
     setCreating(true);
@@ -58,9 +72,7 @@ export default function Dashboard() {
       navigate(`/worksheet/${data.id}`);
     } catch (e) {
       toast.error(formatApiErrorDetail(e.response?.data?.detail));
-    } finally {
-      setCreating(false);
-    }
+    } finally { setCreating(false); }
   };
 
   const handleDelete = async () => {
@@ -78,14 +90,14 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     const list = worksheets || [];
     let jam = 0;
-    list.forEach((w) => {
+    list.forEach((w) =>
       (w.data?.target_mingguan || []).forEach((b) =>
         (b.rows || []).forEach((r) => {
           const n = parseFloat(String(r.jam ?? r.waktu).replace(",", "."));
           if (!isNaN(n)) jam += n;
         })
-      );
-    });
+      )
+    );
     const mkCount = (profile?.mata_kuliah || []).filter((m) => (m.nama || "").trim()).length;
     return { total: list.length, mkCount, jam, pct: overallProgress(list) };
   }, [worksheets, profile]);
@@ -93,201 +105,227 @@ export default function Dashboard() {
   const reminders = useMemo(() => buildReminders(worksheets || []), [worksheets]);
   const todayIdx = new Date().getDay();
   const todayItems = reminders[todayIdx] || [];
-  const reminderDays = Object.keys(reminders).map(Number).sort((a, b) => a - b);
-
   const streak = useMemo(() => computeStreak(worksheets || []), [worksheets]);
-  const badges = useMemo(
-    () => computeBadges({ worksheets: worksheets || [], profile, jam: stats.jam, pct: stats.pct }),
-    [worksheets, profile, stats]
-  );
-  const earnedBadges = badges.filter((b) => b.earned);
-  const hasData = (worksheets || []).length > 0;
-
   const profileOk = isProfileComplete(profile);
 
+  // Mon..Fri streak track
+  const todayIso = ((new Date().getDay() + 6) % 7) + 1; // Mon=1..Sun=7
+  const streakDays = DAY_LABELS.map((label, i) => {
+    const d = i + 1; // 1..5
+    let state = "future";
+    if (d < todayIso) state = "done";
+    else if (d === todayIso) state = "current";
+    return { label, state };
+  });
+
+  const filtered = useMemo(() => {
+    const list = worksheets || [];
+    const q = query.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((w) =>
+      `${w.title} ${worksheetSubtitle(w)}`.toLowerCase().includes(q)
+    );
+  }, [worksheets, query]);
+
   const nav = [
-    { label: "Lembar Kerja", short: "Beranda", icon: LayoutGrid, to: "/dashboard", testid: "worksheets", match: (p) => p.startsWith("/dashboard") },
-    { label: "Buat Baru", short: "Buat", icon: Plus, testid: "create", onClick: handleCreate, primary: true },
-    { label: "Profil Saya", short: "Profil", icon: UserCog, to: "/profile", testid: "profile" },
+    { label: "Dashboard", icon: LayoutGrid, to: "/dashboard", testid: "dashboard", match: (p) => p === "/dashboard" },
+    { label: "Worksheets", icon: PenSquare, testid: "worksheets", onClick: () => document.getElementById("recent-worksheets")?.scrollIntoView({ behavior: "smooth" }) },
+    { label: "Target Plan", icon: Target, testid: "target-plan", onClick: () => toast.info("Target Plan tersedia di dalam setiap lembar kerja") },
+    { label: "SQ3R Method", icon: BookOpen, testid: "sq3r", onClick: () => toast.info("Metode SQ3R diisi di dalam setiap lembar kerja") },
+    { label: "Profile", icon: User, to: "/profile", testid: "profile" },
   ];
+
+  const quickActions = [
+    { label: "New Entry", icon: Plus, onClick: handleCreate },
+    { label: "Schedule", icon: Calendar, onClick: () => document.getElementById("today-focus")?.scrollIntoView({ behavior: "smooth" }) },
+    { label: "Reports", icon: FileText, onClick: () => toast.info("Laporan ringkas segera hadir") },
+    { label: "Settings", icon: Settings, onClick: () => navigate("/profile") },
+  ];
+
+  const firstName = (user?.nama || "Mahasiswa").split(" ")[0];
 
   return (
     <DashboardLayout
       nav={nav}
-      title="Dashboard"
-      subtitle={`Selamat datang, ${user?.nama || ""}`}
-      headerRight={
-        <Button onClick={handleCreate} disabled={creating} data-testid="create-worksheet-button"
-          className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold transition-colors active:scale-[0.98]">
-          {creating ? <Loader2 className="w-4 h-4 animate-spin sm:mr-2" /> : <Plus className="w-4 h-4 sm:mr-2" />}
-          <span className="hidden sm:inline">Buat Lembar Kerja</span>
-        </Button>
-      }
+      primaryAction={{ label: "New Worksheet", onClick: handleCreate }}
+      searchValue={query}
+      onSearchChange={setQuery}
     >
-      {/* Hero greeting */}
-      <div className="relative overflow-hidden rounded-2xl bg-brand-gradient text-white p-6 sm:p-8 mb-6 shadow-soft-lg" data-testid="dashboard-hero">
-        <div className="absolute -top-16 -right-10 w-64 h-64 rounded-full bg-white/10 blur-2xl" />
-        <div
-          className="absolute inset-y-0 right-0 w-2/5 hidden md:block opacity-25 bg-cover bg-center"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1573496129661-bd7fcc7e532b?crop=entropy&cs=srgb&fm=jpg&q=85&w=1000')",
-            WebkitMaskImage: "linear-gradient(to left, black 10%, transparent 95%)",
-            maskImage: "linear-gradient(to left, black 10%, transparent 95%)",
-          }}
-        />
+      {/* Hero */}
+      <div className="relative overflow-hidden rounded-2xl bg-brand-gradient text-white px-7 sm:px-10 py-10 sm:py-12 mb-6" data-testid="dashboard-hero">
+        <GraduationCap className="absolute right-6 sm:right-12 top-1/2 -translate-y-1/2 w-40 h-40 text-white/[0.06]" />
         <div className="relative z-10 max-w-2xl">
-          <p className="text-white/70 text-sm mb-1 flex items-center gap-1.5"><Sparkles className="w-4 h-4" /> Dashboard Belajar Mandiri</p>
-          <h2 className="font-heading font-extrabold text-2xl sm:text-3xl leading-tight mb-2">
-            Halo, {(user?.nama || "Mahasiswa").split(" ")[0]} 👋
-          </h2>
-          <p className="text-white/85 text-sm sm:text-base leading-relaxed mb-5 max-w-xl">
-            {motivationMessage(stats.pct, hasData)}
+          <h1 className="font-heading font-extrabold text-4xl sm:text-5xl tracking-tight mb-3">Halo, {firstName}!</h1>
+          <p className="text-white/70 text-base sm:text-lg leading-relaxed max-w-lg">
+            Selamat datang kembali di area belajarmu. Tetap fokus pada tujuan akademismu hari ini.
           </p>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur px-3 py-1.5 rounded-full text-sm font-semibold" data-testid="streak-pill">
-              <Flame className="w-4 h-4 text-amber-300" /> {streak} hari beruntun
-            </span>
-            <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur px-3 py-1.5 rounded-full text-sm font-semibold">
-              <Gauge className="w-4 h-4 text-teal-200" /> {stats.pct}% ketercapaian
-            </span>
-            <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur px-3 py-1.5 rounded-full text-sm font-semibold">
-              <Award className="w-4 h-4 text-yellow-200" /> {earnedBadges.length} lencana
-            </span>
-          </div>
         </div>
       </div>
 
       {profile && !profileOk && (
-        <div className="mb-6 flex items-start gap-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-4" data-testid="dashboard-profile-warning">
-          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-          <div className="text-sm text-amber-800 flex-1">
+        <div className="mb-6 flex items-start gap-3 bg-white border border-slate-200 rounded-2xl p-4 shadow-soft" data-testid="dashboard-profile-warning">
+          <AlertTriangle className="w-5 h-5 text-neutral-900 shrink-0 mt-0.5" />
+          <div className="text-sm text-neutral-600 flex-1">
             Lengkapi profil Anda (identitas & mata kuliah). Data ini diisi sekali dan otomatis dipakai di setiap lembar kerja.
           </div>
-          <Link to="/profile" data-testid="complete-profile-link">
-            <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white h-8">Lengkapi Profil</Button>
-          </Link>
+          <Button size="sm" onClick={() => navigate("/profile")} data-testid="complete-profile-link" className="bg-neutral-900 hover:bg-black text-white h-8">Lengkapi</Button>
         </div>
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={FileText} color="indigo" label="Total Lembar Kerja" value={worksheets ? stats.total : "—"} caption="Rencana belajar yang Anda buat" testid="stat-total" />
-        <StatCard icon={Library} color="teal" label="Mata Kuliah" value={profile ? stats.mkCount : "—"} caption="MK diregistrasi (dari profil)" testid="stat-mk" />
-        <StatCard icon={Clock} color="amber" label="Jam Belajar" value={worksheets ? `${stats.jam}` : "—"} caption="Akumulasi rencana jam mingguan" testid="stat-jam" />
-        <StatCard icon={Gauge} color="coral" label="Ketercapaian" value={worksheets ? `${stats.pct}%` : "—"} caption="Rata-rata dari tabel monitoring" testid="stat-progress" />
-      </div>
-
-      {/* Achievements / badges */}
-      {worksheets && (
-        <div className="bg-white border border-[#E7E7F0] rounded-2xl p-5 sm:p-6 mb-8 shadow-soft" data-testid="badges-card">
-          <div className="flex items-center gap-2 mb-1">
-            <Award className="w-5 h-5 text-[#4F46E5]" />
-            <h3 className="font-heading font-bold text-slate-800">Pencapaian</h3>
-            <span className="ml-auto text-sm text-slate-400">{earnedBadges.length}/{badges.length} lencana</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <StatBox icon={FileText} label="Total Worksheets" value={worksheets ? stats.total : "—"} topRight={stats.total > 0 ? <TrendUp text={`${stats.total} aktif`} /> : null} testid="stat-total" />
+        <StatBox icon={Bookmark} label="Active Courses" value={profile ? stats.mkCount : "—"} testid="stat-mk" />
+        <StatBox icon={Clock} label="Study Hours" value={worksheets ? stats.jam : "—"} unit="hrs" topRight={<span className="text-xs text-neutral-400">This Week</span>} testid="stat-jam" />
+        {/* Target completion */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-soft flex items-center gap-4" data-testid="stat-progress">
+          <div className="shrink-0">
+            <ProgressRing pct={worksheets ? stats.pct : 0} size={72} stroke={8} />
           </div>
-          <p className="text-xs text-slate-400 mb-4">Kumpulkan lencana dengan aktif membuat & memantau lembar kerja Anda</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {badges.map((b) => (
-              <div
-                key={b.id}
-                data-testid={`badge-${b.id}`}
-                title={b.desc}
-                className={`flex flex-col items-center text-center gap-1.5 rounded-xl border p-3 transition-colors ${
-                  b.earned ? "border-[#C7D2FE] bg-brand-gradient-soft animate-pop-in" : "border-slate-100 bg-slate-50 opacity-60 grayscale"
-                }`}
-              >
-                <span className="text-2xl leading-none">{b.emoji}</span>
-                <span className={`text-[11px] font-semibold leading-tight ${b.earned ? "text-[#4338CA]" : "text-slate-500"}`}>{b.label}</span>
-              </div>
-            ))}
+          <div className="min-w-0">
+            <p className="font-heading font-bold text-neutral-900 leading-tight">Target Completion</p>
+            <p className="text-xs text-neutral-500 mt-1 leading-snug">Rata-rata ketercapaian dari tabel monitoring lembar kerja Anda.</p>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Reminder card */}
-      {worksheets && reminderDays.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-8" data-testid="reminder-card">
-          <div className="flex items-center gap-2 mb-1">
-            <Bell className="w-5 h-5 text-[#4F46E5]" />
-            <h3 className="font-heading font-bold text-slate-800">Pengingat Belajar</h3>
+      {/* Streak + Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        {/* Streak */}
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-soft" data-testid="streak-card">
+          <div className="flex items-center gap-2 mb-8">
+            <Flame className="w-5 h-5 text-neutral-900" />
+            <h3 className="font-heading font-bold text-lg text-neutral-900">Streak Belajar</h3>
+            <span className="ml-auto text-xs font-semibold bg-neutral-100 text-neutral-700 px-3 py-1.5 rounded-full" data-testid="streak-pill">
+              {streak} Hari Beruntun
+            </span>
           </div>
-          <p className="text-xs text-slate-400 mb-4">Berdasarkan hari pada kolom "Catatan (Waktu)" di jadwal per semester Anda</p>
-
-          <div className={`rounded-lg p-4 mb-4 border ${todayItems.length ? "bg-[#E0E7FF] border-[#C7D2FE]" : "bg-slate-50 border-slate-200"}`} data-testid="reminder-today">
-            <p className="text-xs font-bold uppercase tracking-wide text-[#4F46E5] mb-2">
-              Hari ini · {dayName(todayIdx)}
-            </p>
-            {todayItems.length ? (
-              <div className="flex flex-wrap gap-2">
-                {todayItems.map((it, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 bg-white border border-[#C7D2FE] text-[#4F46E5] text-sm font-medium px-3 py-1.5 rounded-full">
-                    <BookOpen className="w-3.5 h-3.5" /> {it.mata_kuliah}
+          <div className="flex items-center justify-between px-1">
+            {streakDays.map((d, i) => (
+              <React.Fragment key={d.label}>
+                <div className="flex flex-col items-center gap-3 shrink-0">
+                  <span className={`text-sm font-semibold ${d.state === "current" ? "text-neutral-900" : "text-neutral-400"}`}>{d.label}</span>
+                  <span className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                    d.state === "done" ? "bg-neutral-900 border-neutral-900 text-white"
+                    : d.state === "current" ? "border-neutral-900 text-neutral-900"
+                    : "border-neutral-200 text-neutral-300"
+                  }`}>
+                    {d.state === "done" ? <Check className="w-4 h-4" strokeWidth={3} />
+                      : d.state === "current" ? <span className="w-2.5 h-2.5 rounded-full bg-neutral-900" />
+                      : null}
                   </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500">Tidak ada jadwal belajar terjadwal hari ini. Tetap semangat! 🎯</p>
-            )}
-          </div>
-
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-2">Jadwal Mingguan</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {reminderDays.map((d) => (
-              <div key={d} className={`flex items-start gap-2.5 rounded-md border p-3 ${d === todayIdx ? "border-[#4F46E5] bg-[#EEF2FF]" : "border-slate-100"}`} data-testid={`reminder-day-${d}`}>
-                <CalendarClock className={`w-4 h-4 mt-0.5 shrink-0 ${d === todayIdx ? "text-[#4F46E5]" : "text-slate-400"}`} />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-800">{dayName(d)}</p>
-                  <p className="text-xs text-slate-500 leading-snug">
-                    {[...new Set(reminders[d].map((x) => x.mata_kuliah))].join(", ")}
-                  </p>
                 </div>
-              </div>
+                {i < streakDays.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-1 mb-[-14px] ${streakDays[i + 1].state !== "future" ? "bg-neutral-900" : d.state === "current" ? "bg-neutral-300 border-t-2 border-dashed border-neutral-300 h-0" : "bg-neutral-200"}`} />
+                )}
+              </React.Fragment>
             ))}
           </div>
         </div>
-      )}
 
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-[#4F46E5]" />
-          <h2 className="font-heading text-lg font-bold tracking-tight text-slate-800">Lembar Kerja Saya</h2>
+        {/* Quick actions */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-soft" data-testid="quick-actions">
+          <h3 className="font-heading font-bold text-lg text-neutral-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {quickActions.map((a) => (
+              <button key={a.label} onClick={a.onClick} data-testid={`qa-${a.label.toLowerCase().replace(" ", "-")}`}
+                className="flex flex-col items-center justify-center gap-2 py-5 rounded-xl border border-slate-200 hover:border-neutral-900 hover:bg-neutral-50 transition-colors">
+                <a.icon className="w-5 h-5 text-neutral-800" />
+                <span className="text-xs font-semibold text-neutral-700">{a.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
-        {worksheets && worksheets.length > 0 && <span className="text-sm text-slate-400">{worksheets.length} item</span>}
       </div>
 
-      {worksheets === null ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="w-7 h-7 animate-spin text-[#4F46E5]" /></div>
-      ) : worksheets.length === 0 ? (
-        <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl bg-white">
-          <div className="w-14 h-14 rounded-full bg-[#E0E7FF] flex items-center justify-center mx-auto mb-4"><FileText className="w-7 h-7 text-[#4F46E5]" /></div>
-          <p className="font-heading font-semibold text-slate-700 mb-1">Belum ada lembar kerja</p>
-          <p className="text-slate-400 text-sm mb-6">Mulai dengan membuat lembar kerja pertama Anda.</p>
-          <Button onClick={handleCreate} disabled={creating} data-testid="create-worksheet-empty-button" className="bg-[#4F46E5] hover:bg-[#4338CA] text-white">
-            <Plus className="w-4 h-4 mr-2" /> Buat Sekarang
-          </Button>
-        </div>
-      ) : (
-        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          {worksheets.map((w) => (
-            <div key={w.id} data-testid={`worksheet-card-${w.id}`} className="group bg-white border border-slate-200 rounded-xl p-5 flex flex-col hover:border-[#4F46E5] hover:shadow-sm transition-colors">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-10 h-10 rounded-md bg-[#E0E7FF] flex items-center justify-center shrink-0"><FileText className="w-5 h-5 text-[#4F46E5]" /></div>
-                <div className="min-w-0">
-                  <h3 className="font-heading font-bold text-slate-800 leading-snug truncate">{w.title}</h3>
-                  <p className="text-xs text-slate-400 flex items-center gap-1 mt-1"><Calendar className="w-3 h-3" /> {formatDate(w.updated_at)}</p>
-                </div>
-              </div>
-              <div className="mt-auto flex items-center gap-2 pt-3 border-t border-slate-100">
-                <Button size="sm" onClick={() => navigate(`/worksheet/${w.id}`)} data-testid={`edit-worksheet-${w.id}`} className="flex-1 bg-[#4F46E5] hover:bg-[#4338CA] text-white h-9">
-                  <Pencil className="w-3.5 h-3.5 mr-1.5" /> Isi
+      {/* Recent worksheets + Today's focus */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Recent worksheets */}
+        <div className="lg:col-span-2" id="recent-worksheets">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-heading font-bold text-xl text-neutral-900">Recent Worksheets</h3>
+            <span className="text-sm text-neutral-400">{worksheets ? `${filtered.length} item` : ""}</span>
+          </div>
+
+          {worksheets === null ? (
+            <div className="flex items-center justify-center py-16"><Loader2 className="w-7 h-7 animate-spin text-neutral-900" /></div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl bg-white">
+              <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto mb-4"><FileText className="w-7 h-7 text-neutral-700" /></div>
+              <p className="font-heading font-semibold text-neutral-800 mb-1">{query ? "Tidak ada hasil" : "Belum ada lembar kerja"}</p>
+              <p className="text-neutral-400 text-sm mb-6">{query ? "Coba kata kunci lain." : "Mulai dengan membuat lembar kerja pertama Anda."}</p>
+              {!query && (
+                <Button onClick={handleCreate} disabled={creating} data-testid="create-worksheet-empty-button" className="bg-neutral-900 hover:bg-black text-white rounded-xl">
+                  <Plus className="w-4 h-4 mr-2" /> Buat Sekarang
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => navigate(`/worksheet/${w.id}/view`)} data-testid={`view-worksheet-${w.id}`} className="h-9 border-slate-200"><Eye className="w-3.5 h-3.5" /></Button>
-                <Button size="sm" variant="outline" onClick={() => setDeleteTarget(w)} data-testid={`delete-worksheet-${w.id}`} className="h-9 border-slate-200 text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></Button>
-              </div>
+              )}
             </div>
-          ))}
+          ) : (
+            <div className="space-y-3">
+              {filtered.map((w) => {
+                const pct = worksheetPct(w);
+                return (
+                  <div key={w.id} data-testid={`worksheet-card-${w.id}`}
+                    className="group bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 hover:border-neutral-900 transition-colors shadow-soft">
+                    <div className="w-12 h-12 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
+                      <BookOpen className="w-5 h-5 text-neutral-700" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-neutral-900 truncate">{w.title}</h4>
+                      <p className="text-xs text-neutral-400 truncate mt-0.5">{worksheetSubtitle(w)}</p>
+                    </div>
+                    <div className="hidden sm:block w-40 shrink-0">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] text-neutral-400">Progress</span>
+                        <span className="text-xs font-bold text-neutral-900 tabular-nums">{pct}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-neutral-200 overflow-hidden">
+                        <div className="h-full bg-neutral-900 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                    <button onClick={() => navigate(`/worksheet/${w.id}`)} data-testid={`edit-worksheet-${w.id}`}
+                      title="Isi lembar kerja"
+                      className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-neutral-700 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-colors shrink-0">
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                    <button onClick={() => setDeleteTarget(w)} data-testid={`delete-worksheet-${w.id}`}
+                      title="Hapus"
+                      className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-neutral-400 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors shrink-0 opacity-0 group-hover:opacity-100">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Today's focus */}
+        <div id="today-focus" className="bg-white border border-slate-200 rounded-2xl p-6 shadow-soft h-fit" data-testid="today-focus">
+          <h3 className="font-heading font-bold text-xl text-neutral-900 mb-5">Today's Focus</h3>
+          {todayItems.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-12 h-12 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto mb-3"><Calendar className="w-6 h-6 text-neutral-400" /></div>
+              <p className="text-sm text-neutral-500">Tidak ada fokus terjadwal hari ini. Tetap semangat! 🎯</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {todayItems.slice(0, 5).map((it, i) => (
+                <div key={i} className="flex gap-3" data-testid={`focus-item-${i}`}>
+                  <div className="flex flex-col items-center pt-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-neutral-900 shrink-0" />
+                    {i < Math.min(todayItems.length, 5) - 1 && <span className="w-px flex-1 bg-neutral-200 mt-1" />}
+                  </div>
+                  <div className="min-w-0 pb-1">
+                    <p className="font-semibold text-neutral-900 leading-tight truncate">{it.mata_kuliah}</p>
+                    <p className="text-xs text-neutral-400 mt-0.5 truncate">{it.worksheet || "Jadwal belajar hari ini"}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent data-testid="delete-dialog">
@@ -302,5 +340,30 @@ export default function Dashboard() {
         </AlertDialogContent>
       </AlertDialog>
     </DashboardLayout>
+  );
+}
+
+function StatBox({ icon: Icon, label, value, unit, topRight, testid }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-soft" data-testid={testid}>
+      <div className="flex items-start justify-between mb-6">
+        <div className="w-11 h-11 rounded-xl bg-neutral-100 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-neutral-800" />
+        </div>
+        {topRight}
+      </div>
+      <p className="text-sm text-neutral-500 mb-1">{label}</p>
+      <p className="font-heading font-extrabold text-3xl text-neutral-900 tabular-nums leading-none">
+        {value}{unit && <span className="text-base font-semibold text-neutral-400 ml-1">{unit}</span>}
+      </p>
+    </div>
+  );
+}
+
+function TrendUp({ text }) {
+  return (
+    <span className="flex items-center gap-1 text-xs font-semibold text-neutral-500">
+      <ArrowUpRight className="w-3.5 h-3.5" /> {text}
+    </span>
   );
 }

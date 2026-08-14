@@ -2,7 +2,7 @@ import React from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 const COLORS = {
-  indigo: { bg: "bg-[#E0E7FF]", fg: "text-[#4F46E5]" },
+  indigo: { bg: "bg-[#F4F4F5]", fg: "text-[#0A0A0A]" },
   amber: { bg: "bg-[#FEF3C7]", fg: "text-[#D97706]" },
   teal: { bg: "bg-[#CCFBF1]", fg: "text-[#0D9488]" },
   coral: { bg: "bg-[#FFE4E6]", fg: "text-[#E11D48]" },

@@ -3,10 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, Menu, ChevronRight } from "lucide-react";
+import { LogOut, Menu, Search, Bell, HelpCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-const SidebarContent = ({ nav, onNavigate }) => {
+const SidebarContent = ({ nav, primaryAction, onNavigate }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,29 +17,21 @@ const SidebarContent = ({ nav, onNavigate }) => {
     navigate("/login", { replace: true });
   };
 
-  const initials = (user?.nama || "U")
-    .split(" ")
-    .slice(0, 2)
-    .map((s) => s[0])
-    .join("")
-    .toUpperCase();
-
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Brand */}
-      <div className="h-16 flex items-center gap-2.5 px-5 border-b border-slate-100">
-        <div className="w-9 h-9 rounded-2xl bg-brand-gradient flex items-center justify-center text-white shrink-0 shadow-soft">
-          <GraduationCap className="w-5 h-5" />
+      <div className="h-[72px] flex items-center gap-3 px-5 border-b border-slate-100">
+        <div className="w-10 h-10 rounded-xl bg-neutral-900 flex items-center justify-center shrink-0">
+          <span className="font-heading font-extrabold text-white text-sm tracking-tight">UT</span>
         </div>
         <div className="leading-tight min-w-0">
-          <p className="font-heading font-extrabold tracking-tight text-sm text-slate-800 truncate">UNIVERSITAS TERBUKA</p>
-          <p className="text-[10px] text-slate-400 tracking-wider uppercase truncate">Belajar Mandiri</p>
+          <p className="font-heading font-extrabold tracking-tight text-[15px] text-neutral-900 truncate">Worksheet UT</p>
+          <p className="text-[11px] text-neutral-400 truncate">Academic Portal</p>
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto p-3">
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 px-3 mb-2">Menu</p>
         <div className="space-y-1">
           {nav.map((item) => {
             const active = item.match ? item.match(location.pathname) : location.pathname === item.to;
@@ -52,129 +44,125 @@ const SidebarContent = ({ nav, onNavigate }) => {
                   else navigate(item.to);
                   onNavigate?.();
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition-colors ${
                   active
-                    ? "bg-brand-gradient-soft text-[#4338CA]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    ? "bg-neutral-900 text-white"
+                    : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
                 }`}
               >
-                <item.icon className="w-4.5 h-4.5 shrink-0" />
+                <item.icon className="w-[18px] h-[18px] shrink-0" />
                 <span className="flex-1 text-left">{item.label}</span>
-                {active && <ChevronRight className="w-4 h-4" />}
               </button>
             );
           })}
         </div>
+
+        {primaryAction && (
+          <div className="mt-6">
+            <Button
+              data-testid="sidebar-new-worksheet"
+              onClick={() => { primaryAction.onClick(); onNavigate?.(); }}
+              className="w-full h-12 rounded-xl bg-neutral-900 hover:bg-black text-white font-semibold transition-colors active:scale-[0.98]"
+            >
+              <Plus className="w-4 h-4 mr-2" /> {primaryAction.label}
+            </Button>
+          </div>
+        )}
       </nav>
 
-      {/* User */}
-      <div className="p-3 border-t border-slate-100">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-xl">
-          <div className="w-9 h-9 rounded-full bg-brand-gradient text-white flex items-center justify-center text-xs font-bold shrink-0">
-            {initials}
-          </div>
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="text-sm font-semibold text-slate-800 truncate">{user?.nama}</p>
-            <p className="text-xs text-slate-400 truncate">
-              {user?.role === "admin" ? "Administrator" : `NIM ${user?.nim}`}
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            data-testid="logout-button"
-            className="text-slate-400 hover:text-red-500 shrink-0"
-            title="Keluar"
-          >
-            <LogOut className="w-4 h-4" />
-          </Button>
-        </div>
+      {/* Footer: Help + Logout */}
+      <div className="p-3 border-t border-slate-100 space-y-1">
+        <button
+          onClick={() => toast.info("Pusat Bantuan segera hadir")}
+          data-testid="help-center-button"
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+        >
+          <HelpCircle className="w-[18px] h-[18px]" /> <span>Help Center</span>
+        </button>
+        <button
+          onClick={handleLogout}
+          data-testid="logout-button"
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+        >
+          <LogOut className="w-[18px] h-[18px]" /> <span>Logout</span>
+        </button>
       </div>
     </div>
   );
 };
 
-// Mobile bottom navigation — quick access to primary destinations
-const BottomNav = ({ nav }) => {
+export const DashboardLayout = ({
+  nav, primaryAction, headerRight, children,
+  searchValue, onSearchChange, searchPlaceholder = "Search worksheets, courses...",
+}) => {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  return (
-    <nav
-      className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-2 pb-[env(safe-area-inset-bottom)]"
-      data-testid="bottom-nav"
-    >
-      <div className="flex items-stretch justify-around">
-        {nav.map((item) => {
-          const active = item.match ? item.match(location.pathname) : location.pathname === item.to;
-          const isPrimary = item.primary;
-          return (
-            <button
-              key={item.label}
-              data-testid={`bottomnav-${item.testid}`}
-              onClick={() => (item.onClick ? item.onClick() : navigate(item.to))}
-              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2"
-            >
-              {isPrimary ? (
-                <span className="w-11 h-11 -mt-5 rounded-2xl bg-brand-gradient text-white flex items-center justify-center shadow-soft-lg">
-                  <item.icon className="w-5 h-5" />
-                </span>
-              ) : (
-                <item.icon className={`w-5 h-5 ${active ? "text-[#4F46E5]" : "text-slate-400"}`} />
-              )}
-              <span className={`text-[10px] font-medium ${active ? "text-[#4F46E5]" : "text-slate-500"}`}>
-                {item.short || item.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
-  );
-};
-
-export const DashboardLayout = ({ nav, title, subtitle, headerRight, children }) => {
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState(searchValue || "");
+
+  const initials = (user?.nama || "U")
+    .split(" ").slice(0, 2).map((s) => s[0]).join("").toUpperCase();
+
+  const handleSearch = (v) => {
+    setQ(v);
+    if (onSearchChange) onSearchChange(v);
+  };
 
   return (
-    <div className="min-h-screen bg-[#F7F7FB]">
+    <div className="min-h-screen bg-[#F4F4F5]">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 border-r border-slate-200 z-30">
-        <SidebarContent nav={nav} />
+        <SidebarContent nav={nav} primaryAction={primaryAction} />
       </aside>
 
-      {/* Mobile sidebar (full menu incl. logout) */}
+      {/* Mobile sidebar */}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="p-0 w-64">
-          <SidebarContent nav={nav} onNavigate={() => setOpen(false)} />
+          <SidebarContent nav={nav} primaryAction={primaryAction} onNavigate={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
 
       {/* Main */}
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 h-16 backdrop-blur-xl bg-white/80 border-b border-slate-200 flex items-center justify-between gap-4 px-4 sm:px-8">
-          <div className="flex items-center gap-3 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden text-slate-600"
-              onClick={() => setOpen(true)}
-              data-testid="mobile-menu-button"
-            >
+        <header className="sticky top-0 z-20 h-[72px] bg-[#F4F4F5]/80 backdrop-blur-xl flex items-center justify-between gap-3 px-4 sm:px-8">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <Button variant="ghost" size="icon" className="lg:hidden text-neutral-600 shrink-0"
+              onClick={() => setOpen(true)} data-testid="mobile-menu-button">
               <Menu className="w-5 h-5" />
             </Button>
-            <div className="min-w-0">
-              <h1 className="font-heading font-bold text-lg text-slate-900 leading-tight truncate">{title}</h1>
-              {subtitle && <p className="text-xs text-slate-400 truncate">{subtitle}</p>}
+            <div className="relative w-full max-w-md">
+              <Search className="w-4 h-4 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                data-testid="topbar-search"
+                value={q}
+                onChange={(e) => handleSearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !onSearchChange) navigate("/dashboard"); }}
+                placeholder={searchPlaceholder}
+                className="w-full h-11 pl-11 pr-4 rounded-xl bg-white border border-slate-200 text-sm text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-300 transition-colors"
+              />
             </div>
           </div>
-          {headerRight}
+
+          <div className="flex items-center gap-3 sm:gap-5 shrink-0">
+            {headerRight}
+            <button className="relative text-neutral-500 hover:text-neutral-900 transition-colors" data-testid="notif-button" title="Notifikasi">
+              <Bell className="w-5 h-5" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-neutral-900 ring-2 ring-[#F4F4F5]" />
+            </button>
+            <div className="hidden sm:flex items-center gap-3 pl-4 sm:pl-5 border-l border-slate-200">
+              <div className="text-right leading-tight">
+                <p className="text-sm font-semibold text-neutral-900 truncate max-w-[160px]">{user?.nama}</p>
+                <p className="text-xs text-neutral-400">{user?.role === "admin" ? "Administrator" : user?.nim}</p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center text-xs font-bold">
+                {initials}
+              </div>
+            </div>
+          </div>
         </header>
 
-        <main className="p-4 sm:p-8 pb-24 lg:pb-8">{children}</main>
+        <main className="p-4 sm:p-8 pt-2 sm:pt-2 pb-24 lg:pb-8">{children}</main>
       </div>
-
-      <BottomNav nav={nav} />
     </div>
   );
 };

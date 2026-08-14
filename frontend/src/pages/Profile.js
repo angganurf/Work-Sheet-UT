@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api, { formatApiErrorDetail } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Loader2, Save, Plus, Trash2, User, Target, Library, LayoutGrid, UserCog,
+  Loader2, Save, Plus, Trash2, User, Target, Library, LayoutGrid, BookOpen, PenSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,12 +17,13 @@ const Field = ({ label, value, onChange, placeholder, testid }) => (
   <div className="space-y-1.5">
     <Label className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">{label}</Label>
     <Input value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} data-testid={testid}
-      className="bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]" />
+      className="bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A]" />
   </div>
 );
 
 export default function Profile() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,15 +57,19 @@ export default function Profile() {
   };
 
   const nav = [
-    { label: "Lembar Kerja", icon: LayoutGrid, to: "/dashboard", testid: "worksheets", match: (p) => p.startsWith("/dashboard") },
-    { label: "Profil Saya", icon: UserCog, to: "/profile", testid: "profile" },
+    { label: "Dashboard", icon: LayoutGrid, to: "/dashboard", testid: "dashboard", match: (p) => p === "/dashboard" },
+    { label: "Worksheets", icon: PenSquare, to: "/dashboard", testid: "worksheets" },
+    { label: "Target Plan", icon: Target, testid: "target-plan", onClick: () => toast.info("Target Plan tersedia di dalam setiap lembar kerja") },
+    { label: "SQ3R Method", icon: BookOpen, testid: "sq3r", onClick: () => toast.info("Metode SQ3R diisi di dalam setiap lembar kerja") },
+    { label: "Profile", icon: User, to: "/profile", testid: "profile" },
   ];
+  const primaryAction = { label: "New Worksheet", onClick: () => navigate("/dashboard") };
 
   if (loading || !profile) {
     return (
-      <DashboardLayout nav={nav} title="Profil Saya" subtitle="Data ini diisi sekali">
+      <DashboardLayout nav={nav} primaryAction={primaryAction}>
         <div className="flex items-center justify-center py-32">
-          <Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#0A0A0A]" />
         </div>
       </DashboardLayout>
     );
@@ -75,10 +81,9 @@ export default function Profile() {
   return (
     <DashboardLayout
       nav={nav}
-      title="Profil Saya"
-      subtitle="Identitas, tujuan, dan mata kuliah — diisi sekali"
+      primaryAction={primaryAction}
       headerRight={
-        <Button onClick={save} disabled={saving} data-testid="save-profile-button" className="bg-[#4F46E5] hover:bg-[#4338CA] text-white">
+        <Button onClick={save} disabled={saving} data-testid="save-profile-button" className="bg-[#0A0A0A] hover:bg-[#000000] text-white">
           {saving ? <Loader2 className="w-4 h-4 animate-spin sm:mr-2" /> : <Save className="w-4 h-4 sm:mr-2" />}
           <span className="hidden sm:inline">Simpan Profil</span>
         </Button>
@@ -88,7 +93,7 @@ export default function Profile() {
         {/* Identitas */}
         <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50/60">
-            <div className="w-9 h-9 rounded-md bg-[#4F46E5] text-white flex items-center justify-center"><User className="w-4.5 h-4.5" /></div>
+            <div className="w-9 h-9 rounded-md bg-[#0A0A0A] text-white flex items-center justify-center"><User className="w-4.5 h-4.5" /></div>
             <h3 className="font-heading font-bold text-slate-800">Identitas Mahasiswa</h3>
           </div>
           <div className="p-6 grid sm:grid-cols-2 gap-4">
@@ -102,7 +107,7 @@ export default function Profile() {
             <div className="sm:col-span-2 space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Alamat Rumah</Label>
               <Textarea value={profile.identitas.alamat_rumah} onChange={(e) => updId("alamat_rumah", e.target.value)} rows={2} data-testid="p-alamat"
-                className="bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]" />
+                className="bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A]" />
             </div>
             <Field label="Nomor HP" value={profile.identitas.nomor_hp} onChange={(v) => updId("nomor_hp", v)} testid="p-hp" />
             <Field label="Nomor Kontak yang Dapat Dihubungi" value={profile.identitas.nomor_kontak} onChange={(v) => updId("nomor_kontak", v)} testid="p-kontak" />
@@ -114,28 +119,28 @@ export default function Profile() {
         {/* Tujuan & target */}
         <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50/60">
-            <div className="w-9 h-9 rounded-md bg-[#4F46E5] text-white flex items-center justify-center"><Target className="w-4.5 h-4.5" /></div>
+            <div className="w-9 h-9 rounded-md bg-[#0A0A0A] text-white flex items-center justify-center"><Target className="w-4.5 h-4.5" /></div>
             <h3 className="font-heading font-bold text-slate-800">Tujuan & Target Belajar</h3>
           </div>
           <div className="p-6 space-y-5">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Tujuan Belajar</Label>
               <Textarea value={profile.tujuan_belajar} onChange={(e) => upd("tujuan_belajar", e.target.value)} rows={3} data-testid="p-tujuan"
-                className="bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]" placeholder="Tuliskan tujuan belajar Anda…" />
+                className="bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A]" placeholder="Tuliskan tujuan belajar Anda…" />
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Target Belajar</Label>
               {profile.target_belajar.map((t, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-[#4F46E5] w-5">{i + 1}.</span>
+                  <span className="text-xs font-semibold text-[#0A0A0A] w-5">{i + 1}.</span>
                   <Input value={t} onChange={(e) => { const n = [...profile.target_belajar]; n[i] = e.target.value; upd("target_belajar", n); }}
-                    data-testid={`p-target-${i}`} className="bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]" placeholder="Target belajar…" />
+                    data-testid={`p-target-${i}`} className="bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A]" placeholder="Target belajar…" />
                   <Button type="button" variant="ghost" size="icon" onClick={() => upd("target_belajar", profile.target_belajar.filter((_, x) => x !== i))} disabled={profile.target_belajar.length === 1} className="text-slate-400 hover:text-red-500">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => upd("target_belajar", [...profile.target_belajar, ""])} data-testid="p-target-add" className="border-dashed border-slate-300 text-[#4F46E5] hover:bg-[#E0E7FF]">
+              <Button type="button" variant="outline" size="sm" onClick={() => upd("target_belajar", [...profile.target_belajar, ""])} data-testid="p-target-add" className="border-dashed border-slate-300 text-[#0A0A0A] hover:bg-[#F4F4F5]">
                 <Plus className="w-3.5 h-3.5 mr-1.5" /> Tambah
               </Button>
             </div>
@@ -145,7 +150,7 @@ export default function Profile() {
         {/* Mata kuliah */}
         <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50/60">
-            <div className="w-9 h-9 rounded-md bg-[#4F46E5] text-white flex items-center justify-center"><Library className="w-4.5 h-4.5" /></div>
+            <div className="w-9 h-9 rounded-md bg-[#0A0A0A] text-white flex items-center justify-center"><Library className="w-4.5 h-4.5" /></div>
             <div>
               <h3 className="font-heading font-bold text-slate-800">Mata Kuliah yang Diregistrasi</h3>
               <p className="text-xs text-slate-400 mt-0.5">Digunakan sebagai pilihan pada lembar kerja</p>
@@ -155,7 +160,7 @@ export default function Profile() {
             <div className="border border-slate-200 rounded-md overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="bg-[#E0E7FF] text-[#4F46E5]">
+                  <tr className="bg-[#F4F4F5] text-[#0A0A0A]">
                     <th className="text-left font-semibold p-2.5 w-32">Kode MK</th>
                     <th className="text-left font-semibold p-2.5">Nama MK</th>
                     <th className="text-left font-semibold p-2.5 w-20">SKS</th>
@@ -166,13 +171,13 @@ export default function Profile() {
                   {profile.mata_kuliah.map((mk, i) => (
                     <tr key={i} className="border-t border-slate-200">
                       <td className="p-1 border-r border-slate-100">
-                        <input className="w-full bg-transparent px-2 py-1.5 outline-none focus:bg-[#E0E7FF]/40 rounded" value={mk.kode} onChange={(e) => { const n = [...profile.mata_kuliah]; n[i] = { ...n[i], kode: e.target.value }; upd("mata_kuliah", n); }} data-testid={`p-mk-kode-${i}`} placeholder="STSI4103" />
+                        <input className="w-full bg-transparent px-2 py-1.5 outline-none focus:bg-[#F4F4F5]/40 rounded" value={mk.kode} onChange={(e) => { const n = [...profile.mata_kuliah]; n[i] = { ...n[i], kode: e.target.value }; upd("mata_kuliah", n); }} data-testid={`p-mk-kode-${i}`} placeholder="STSI4103" />
                       </td>
                       <td className="p-1 border-r border-slate-100">
-                        <input className="w-full bg-transparent px-2 py-1.5 outline-none focus:bg-[#E0E7FF]/40 rounded" value={mk.nama} onChange={(e) => { const n = [...profile.mata_kuliah]; n[i] = { ...n[i], nama: e.target.value }; upd("mata_kuliah", n); }} data-testid={`p-mk-nama-${i}`} placeholder="Nama mata kuliah" />
+                        <input className="w-full bg-transparent px-2 py-1.5 outline-none focus:bg-[#F4F4F5]/40 rounded" value={mk.nama} onChange={(e) => { const n = [...profile.mata_kuliah]; n[i] = { ...n[i], nama: e.target.value }; upd("mata_kuliah", n); }} data-testid={`p-mk-nama-${i}`} placeholder="Nama mata kuliah" />
                       </td>
                       <td className="p-1 border-r border-slate-100">
-                        <input className="w-full bg-transparent px-2 py-1.5 outline-none focus:bg-[#E0E7FF]/40 rounded" value={mk.sks} onChange={(e) => { const n = [...profile.mata_kuliah]; n[i] = { ...n[i], sks: e.target.value }; upd("mata_kuliah", n); }} data-testid={`p-mk-sks-${i}`} placeholder="3" />
+                        <input className="w-full bg-transparent px-2 py-1.5 outline-none focus:bg-[#F4F4F5]/40 rounded" value={mk.sks} onChange={(e) => { const n = [...profile.mata_kuliah]; n[i] = { ...n[i], sks: e.target.value }; upd("mata_kuliah", n); }} data-testid={`p-mk-sks-${i}`} placeholder="3" />
                       </td>
                       <td className="p-1 text-center">
                         <button type="button" onClick={() => upd("mata_kuliah", profile.mata_kuliah.filter((_, x) => x !== i))} disabled={profile.mata_kuliah.length === 1} className="text-slate-300 hover:text-red-500 disabled:opacity-30">
@@ -184,14 +189,14 @@ export default function Profile() {
                 </tbody>
               </table>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={() => upd("mata_kuliah", [...profile.mata_kuliah, { kode: "", nama: "", sks: "" }])} data-testid="p-mk-add" className="mt-3 border-dashed border-slate-300 text-[#4F46E5] hover:bg-[#E0E7FF]">
+            <Button type="button" variant="outline" size="sm" onClick={() => upd("mata_kuliah", [...profile.mata_kuliah, { kode: "", nama: "", sks: "" }])} data-testid="p-mk-add" className="mt-3 border-dashed border-slate-300 text-[#0A0A0A] hover:bg-[#F4F4F5]">
               <Plus className="w-3.5 h-3.5 mr-1.5" /> Tambah Mata Kuliah
             </Button>
           </div>
         </section>
 
         <div className="flex justify-end pb-8">
-          <Button onClick={save} disabled={saving} data-testid="bottom-save-profile-button" className="bg-[#4F46E5] hover:bg-[#4338CA] text-white">
+          <Button onClick={save} disabled={saving} data-testid="bottom-save-profile-button" className="bg-[#0A0A0A] hover:bg-[#000000] text-white">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />} Simpan Profil
           </Button>
         </div>

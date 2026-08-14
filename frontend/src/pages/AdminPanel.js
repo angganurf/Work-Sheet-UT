@@ -90,7 +90,7 @@ export default function AdminPanel() {
       {/* Chart */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-8">
         <div className="flex items-center gap-2 mb-1">
-          <BarChart3 className="w-5 h-5 text-[#4F46E5]" />
+          <BarChart3 className="w-5 h-5 text-[#0A0A0A]" />
           <h3 className="font-heading font-bold text-slate-800">Lembar Kerja Dibuat</h3>
         </div>
         <p className="text-xs text-slate-400 mb-5">Distribusi pembuatan lembar kerja dalam 6 bulan terakhir</p>
@@ -99,18 +99,18 @@ export default function AdminPanel() {
             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="ut" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#0A0A0A" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#0A0A0A" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef0f5" />
               <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} />
               <Tooltip
                 contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
-                labelStyle={{ color: "#4F46E5", fontWeight: 700 }}
+                labelStyle={{ color: "#0A0A0A", fontWeight: 700 }}
                 formatter={(v) => [`${v} lembar kerja`, ""]}
               />
-              <Area type="monotone" dataKey="value" stroke="#4F46E5" strokeWidth={2.5} fill="url(#ut)" />
+              <Area type="monotone" dataKey="value" stroke="#0A0A0A" strokeWidth={2.5} fill="url(#ut)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -126,14 +126,14 @@ export default function AdminPanel() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari NIM, nama, atau judul…"
             data-testid="admin-search-input"
-            className="pl-10 bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]"
+            className="pl-10 bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A]"
           />
         </div>
       </div>
 
       {rows === null ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-7 h-7 animate-spin text-[#4F46E5]" />
+          <Loader2 className="w-7 h-7 animate-spin text-[#0A0A0A]" />
         </div>
       ) : rows.length === 0 ? (
         <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl bg-white text-slate-400">
@@ -155,12 +155,12 @@ export default function AdminPanel() {
               <tbody>
                 {rows.map((w) => (
                   <tr key={w.id} className="border-t border-slate-100 hover:bg-slate-50/70 transition-colors" data-testid={`admin-row-${w.id}`}>
-                    <td className="p-4 text-sm font-semibold text-[#4F46E5]">{w.nim}</td>
+                    <td className="p-4 text-sm font-semibold text-[#0A0A0A]">{w.nim}</td>
                     <td className="p-4 text-sm text-slate-800">{w.nama}</td>
                     <td className="p-4 text-sm text-slate-600">{w.title}</td>
                     <td className="p-4 text-sm text-slate-400">{formatDate(w.updated_at)}</td>
                     <td className="p-4 text-right">
-                      <Button size="sm" variant="outline" onClick={() => navigate(`/admin/worksheet/${w.id}/view`)} data-testid={`admin-view-${w.id}`} className="border-slate-200 text-[#4F46E5] hover:bg-[#E0E7FF]">
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/admin/worksheet/${w.id}/view`)} data-testid={`admin-view-${w.id}`} className="border-slate-200 text-[#0A0A0A] hover:bg-[#F4F4F5]">
                         <Eye className="w-3.5 h-3.5 mr-1.5" /> Lihat
                       </Button>
                     </td>

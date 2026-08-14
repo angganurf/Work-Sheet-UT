@@ -15,7 +15,7 @@ function BrandPanel({ title, subtitle }) {
     <div className="hidden lg:flex relative flex-col justify-between p-12 bg-brand-gradient overflow-hidden">
       <div className="absolute inset-0 opacity-15 bg-cover bg-center" style={{ backgroundImage: `url('${HERO_IMG}')` }} />
       <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-white/10 blur-2xl" />
-      <div className="absolute -bottom-32 -left-16 w-96 h-96 rounded-full bg-[#6366F1]/30 blur-3xl" />
+      <div className="absolute -bottom-32 -left-16 w-96 h-96 rounded-full bg-[#171717]/30 blur-3xl" />
 
       <div className="relative z-10 flex items-center gap-3 text-white">
         <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center">
@@ -79,7 +79,7 @@ export default function Register() {
     }
   };
 
-  const inputCls = "h-12 rounded-xl bg-white border-slate-200 focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20";
+  const inputCls = "h-12 rounded-xl bg-white border-slate-200 focus:border-[#0A0A0A] focus:ring-2 focus:ring-[#0A0A0A]/20";
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-[#F7F7FB]">
@@ -124,14 +124,14 @@ export default function Register() {
             )}
 
             <Button type="submit" data-testid="register-submit-button" disabled={loading}
-              className="w-full h-12 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold shadow-soft transition-colors active:scale-[0.98]">
+              className="w-full h-12 rounded-xl bg-[#0A0A0A] hover:bg-[#000000] text-white font-semibold shadow-soft transition-colors active:scale-[0.98]">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Daftar"}
             </Button>
           </form>
 
           <p className="mt-6 text-sm text-slate-500 text-center">
             Sudah punya akun?{" "}
-            <Link to="/login" data-testid="go-login-link" className="text-[#4F46E5] font-semibold hover:underline">Masuk di sini</Link>
+            <Link to="/login" data-testid="go-login-link" className="text-[#0A0A0A] font-semibold hover:underline">Masuk di sini</Link>
           </p>
         </div>
       </div>

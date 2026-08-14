@@ -4,12 +4,12 @@ export const ProgressRing = ({ pct = 0, size = 72, stroke = 7, label, sub }) => 
   const radius = (size - stroke) / 2;
   const circ = 2 * Math.PI * radius;
   const offset = circ - (Math.min(100, Math.max(0, pct)) / 100) * circ;
-  const color = pct >= 75 ? "#14B8A6" : pct >= 40 ? "#4F46E5" : "#F59E0B";
+  const color = "#0A0A0A";
   return (
     <div className="flex flex-col items-center gap-1.5 w-32">
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E7E7F0" strokeWidth={stroke} />
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E5E5E5" strokeWidth={stroke} />
           <circle
             cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={stroke}
             strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"

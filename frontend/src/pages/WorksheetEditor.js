@@ -25,11 +25,11 @@ import { toast } from "sonner";
 const SectionCard = ({ num, icon: Icon, title, subtitle, children }) => (
   <section className="print-break bg-white border border-slate-200 rounded-lg overflow-hidden">
     <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50/60">
-      <div className="w-9 h-9 rounded-md bg-[#4F46E5] text-white flex items-center justify-center shrink-0">
+      <div className="w-9 h-9 rounded-md bg-[#0A0A0A] text-white flex items-center justify-center shrink-0">
         {Icon ? <Icon className="w-4.5 h-4.5" /> : <span className="font-heading font-bold">{num}</span>}
       </div>
       <div>
-        <h3 className="font-heading font-bold text-slate-800 leading-tight"><span className="text-[#4F46E5] mr-1.5">{num}.</span>{title}</h3>
+        <h3 className="font-heading font-bold text-slate-800 leading-tight"><span className="text-[#0A0A0A] mr-1.5">{num}.</span>{title}</h3>
         {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
       </div>
     </div>
@@ -41,7 +41,7 @@ const AreaField = ({ label, value, onChange, placeholder, rows = 3, testid }) =>
   <div className="space-y-1.5">
     <Label className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">{label}</Label>
     <Textarea value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows} data-testid={testid}
-      className="bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] resize-y" />
+      className="bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] resize-y" />
   </div>
 );
 
@@ -49,7 +49,7 @@ const MField = ({ label, value, onChange, placeholder, testid }) => (
   <div className="space-y-1.5">
     <Label className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">{label}</Label>
     <Input value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} data-testid={testid}
-      className="bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]" />
+      className="bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A]" />
   </div>
 );
 
@@ -59,15 +59,15 @@ const ListEditor = ({ items, onChange, placeholder, testidPrefix }) => {
     <div className="space-y-2">
       {items.map((it, i) => (
         <div key={i} className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-[#4F46E5] w-5 shrink-0">{i + 1}.</span>
+          <span className="text-xs font-semibold text-[#0A0A0A] w-5 shrink-0">{i + 1}.</span>
           <Input value={it} onChange={(e) => update(i, e.target.value)} placeholder={placeholder} data-testid={`${testidPrefix}-${i}`}
-            className="bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]" />
+            className="bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A]" />
           <Button type="button" variant="ghost" size="icon" onClick={() => onChange(items.filter((_, idx) => idx !== i))} disabled={items.length === 1} className="text-slate-400 hover:text-red-500 shrink-0">
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={() => onChange([...items, ""])} data-testid={`${testidPrefix}-add`} className="border-dashed border-slate-300 text-[#4F46E5] hover:bg-[#E0E7FF]">
+      <Button type="button" variant="outline" size="sm" onClick={() => onChange([...items, ""])} data-testid={`${testidPrefix}-add`} className="border-dashed border-slate-300 text-[#0A0A0A] hover:bg-[#F4F4F5]">
         <Plus className="w-3.5 h-3.5 mr-1.5" /> Tambah
       </Button>
     </div>
@@ -75,7 +75,7 @@ const ListEditor = ({ items, onChange, placeholder, testidPrefix }) => {
 };
 
 const AddRowButton = ({ onClick, testid, label = "Tambah Baris" }) => (
-  <Button type="button" variant="outline" size="sm" onClick={onClick} data-testid={testid} className="mt-3 border-dashed border-slate-300 text-[#4F46E5] hover:bg-[#E0E7FF]">
+  <Button type="button" variant="outline" size="sm" onClick={onClick} data-testid={testid} className="mt-3 border-dashed border-slate-300 text-[#0A0A0A] hover:bg-[#F4F4F5]">
     <Plus className="w-3.5 h-3.5 mr-1.5" /> {label}
   </Button>
 );
@@ -85,7 +85,7 @@ const CourseSelect = ({ value, onChange, options, testid, placeholder = "Pilih m
   if (value && !opts.includes(value)) opts.unshift(value);
   return (
     <Select value={value || undefined} onValueChange={onChange}>
-      <SelectTrigger data-testid={testid} className="h-9 bg-white border-slate-200 focus:ring-1 focus:ring-[#4F46E5] text-sm">
+      <SelectTrigger data-testid={testid} className="h-9 bg-white border-slate-200 focus:ring-1 focus:ring-[#0A0A0A] text-sm">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
@@ -97,7 +97,7 @@ const CourseSelect = ({ value, onChange, options, testid, placeholder = "Pilih m
   );
 };
 
-const cellInput = "w-full bg-transparent px-2 py-1.5 text-sm outline-none focus:bg-[#E0E7FF]/40 rounded";
+const cellInput = "w-full bg-transparent px-2 py-1.5 text-sm outline-none focus:bg-[#F4F4F5]/40 rounded";
 
 /* ---------- main ---------- */
 export default function WorksheetEditor() {
@@ -182,7 +182,7 @@ export default function WorksheetEditor() {
   };
 
   if (loading || !data) {
-    return (<div className="min-h-screen bg-[#F7F7FB]"><TopNav /><div className="flex items-center justify-center py-32"><Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" /></div></div>);
+    return (<div className="min-h-screen bg-[#F7F7FB]"><TopNav /><div className="flex items-center justify-center py-32"><Loader2 className="w-8 h-8 animate-spin text-[#0A0A0A]" /></div></div>);
   }
 
   const weeks = Number(data.weeks) || 9;
@@ -201,26 +201,26 @@ export default function WorksheetEditor() {
             {saving ? (<><Loader2 className="w-3.5 h-3.5 animate-spin" /> Menyimpan…</>) : dirty ? "Perubahan belum tersimpan" : (<><Check className="w-3.5 h-3.5 text-green-600" /> Tersimpan</>)}
           </span>
           <Button variant="outline" size="sm" onClick={() => navigate(`/worksheet/${id}/view`)} data-testid="preview-button" className="border-slate-200"><Eye className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Pratinjau</span></Button>
-          <Button size="sm" onClick={() => doSave(false)} disabled={saving} data-testid="save-button" className="bg-[#4F46E5] hover:bg-[#4338CA] text-white"><Save className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Simpan</span></Button>
+          <Button size="sm" onClick={() => doSave(false)} disabled={saving} data-testid="save-button" className="bg-[#0A0A0A] hover:bg-[#000000] text-white"><Save className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Simpan</span></Button>
         </div>
       } />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        <button onClick={() => navigate("/dashboard")} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#4F46E5] mb-5 transition-colors" data-testid="back-button">
+        <button onClick={() => navigate("/dashboard")} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0A0A0A] mb-5 transition-colors" data-testid="back-button">
           <ArrowLeft className="w-4 h-4" /> Kembali ke Dashboard
         </button>
 
         <div className="bg-white border border-slate-200 rounded-lg p-6 mb-6">
           <div className="text-center mb-5 pb-5 border-b border-slate-100">
-            <p className="font-heading font-black text-[#4F46E5] tracking-tight text-lg">UNIVERSITAS TERBUKA</p>
+            <p className="font-heading font-black text-[#0A0A0A] tracking-tight text-lg">UNIVERSITAS TERBUKA</p>
             <p className="text-xs text-slate-400 uppercase tracking-[0.2em] mt-1">Lembar Kerja Pelatihan Belajar Mandiri · 2026</p>
           </div>
           <Label className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Judul Lembar Kerja</Label>
-          <Input value={title} onChange={(e) => setTitleDirty(e.target.value)} data-testid="worksheet-title-input" className="mt-1.5 text-lg font-heading font-bold bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]" placeholder="Judul lembar kerja" />
+          <Input value={title} onChange={(e) => setTitleDirty(e.target.value)} data-testid="worksheet-title-input" className="mt-1.5 text-lg font-heading font-bold bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A]" placeholder="Judul lembar kerja" />
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
             <span><span className="text-slate-400">Nama:</span> <span className="font-medium text-slate-700">{profile?.identitas?.nama || "-"}</span></span>
             <span><span className="text-slate-400">NIM:</span> <span className="font-medium text-slate-700">{profile?.identitas?.nim || "-"}</span></span>
-            <Link to="/profile" className="ml-auto text-[#4F46E5] font-semibold hover:underline inline-flex items-center gap-1" data-testid="edit-profile-link"><UserCog className="w-3.5 h-3.5" /> Ubah Profil</Link>
+            <Link to="/profile" className="ml-auto text-[#0A0A0A] font-semibold hover:underline inline-flex items-center gap-1" data-testid="edit-profile-link"><UserCog className="w-3.5 h-3.5" /> Ubah Profil</Link>
           </div>
         </div>
 
@@ -236,26 +236,26 @@ export default function WorksheetEditor() {
           <SectionCard num="3" icon={CalendarDays} title="Jadwal Belajar Per Semester" subtitle="Isi dengan jumlah jam belajar pada tiap minggu">
             <div className="mb-4 max-w-xs">
               <Label className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Semester</Label>
-              <Input value={data.semester} onChange={(e) => upd("semester", e.target.value)} placeholder="Contoh: 1 (Satu)" data-testid="f-semester" className="mt-1.5 bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]" />
+              <Input value={data.semester} onChange={(e) => upd("semester", e.target.value)} placeholder="Contoh: 1 (Satu)" data-testid="f-semester" className="mt-1.5 bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A]" />
             </div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-semibold text-slate-500">Nilai pada kolom minggu = jumlah jam belajar</p>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400">{weeks} minggu</span>
                 <Button type="button" variant="outline" size="icon" onClick={removeWeek} disabled={weeks <= 1} data-testid="remove-week-button" className="h-8 w-8 border-slate-200"><Minus className="w-4 h-4" /></Button>
-                <Button type="button" variant="outline" size="sm" onClick={addWeek} data-testid="add-week-button" className="h-8 border-slate-200 text-[#4F46E5]"><Plus className="w-4 h-4 mr-1" /> Minggu</Button>
+                <Button type="button" variant="outline" size="sm" onClick={addWeek} data-testid="add-week-button" className="h-8 border-slate-200 text-[#0A0A0A]"><Plus className="w-4 h-4 mr-1" /> Minggu</Button>
               </div>
             </div>
             <div className="border border-slate-200 rounded-md overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="bg-[#E0E7FF] text-[#4F46E5]">
+                  <tr className="bg-[#F4F4F5] text-[#0A0A0A]">
                     <th rowSpan={2} className="text-left font-semibold p-2.5 min-w-[220px] align-middle border-r border-white/60">Mata Kuliah</th>
                     <th colSpan={weeks} className="font-semibold p-1.5 text-center border-b border-white/60">Minggu ke- (Jumlah Jam)</th>
                     <th rowSpan={2} className="text-left font-semibold p-2.5 min-w-[120px] align-middle border-l border-white/60">Catatan (Waktu)</th>
                     <th rowSpan={2} className="w-10 p-2"></th>
                   </tr>
-                  <tr className="bg-[#E0E7FF] text-[#4F46E5]">
+                  <tr className="bg-[#F4F4F5] text-[#0A0A0A]">
                     {Array.from({ length: weeks }).map((_, w) => <th key={w} className="font-semibold p-2 w-10 text-center border-l border-white/50">{w + 1}</th>)}
                   </tr>
                 </thead>
@@ -286,7 +286,7 @@ export default function WorksheetEditor() {
                   <div className="border border-slate-200 rounded-md overflow-x-auto">
                     <table className="w-full border-collapse text-sm">
                       <thead>
-                        <tr className="bg-[#E0E7FF] text-[#4F46E5] text-xs">
+                        <tr className="bg-[#F4F4F5] text-[#0A0A0A] text-xs">
                           <th className="font-semibold p-2 w-14">Minggu Ke-</th>
                           <th className="text-left font-semibold p-2 min-w-[180px]">Target Belajar</th>
                           <th className="font-semibold p-2 w-28">Jml Halaman Modul</th>
@@ -307,11 +307,11 @@ export default function WorksheetEditor() {
                             <td className="p-1.5 border-r border-slate-100">
                               <div className="flex items-center gap-1.5 justify-center">
                                 <Button type="button" size="sm" variant={r.monitoring?.enabled ? "default" : "outline"} onClick={() => openDialog(bi, ri, "monitoring")} data-testid={`monitor-btn-${bi}-${ri}`}
-                                  className={r.monitoring?.enabled ? "h-7 px-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs" : "h-7 px-2 border-slate-200 text-[#4F46E5] text-xs"}>
+                                  className={r.monitoring?.enabled ? "h-7 px-2 bg-[#0A0A0A] hover:bg-[#000000] text-white text-xs" : "h-7 px-2 border-slate-200 text-[#0A0A0A] text-xs"}>
                                   {r.monitoring?.enabled && <Check className="w-3 h-3 mr-1" />} Monitoring
                                 </Button>
                                 <Button type="button" size="sm" variant={r.sq3r?.enabled ? "default" : "outline"} onClick={() => openDialog(bi, ri, "sq3r")} data-testid={`sq3r-btn-${bi}-${ri}`}
-                                  className={r.sq3r?.enabled ? "h-7 px-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs" : "h-7 px-2 border-slate-200 text-[#4F46E5] text-xs"}>
+                                  className={r.sq3r?.enabled ? "h-7 px-2 bg-[#0A0A0A] hover:bg-[#000000] text-white text-xs" : "h-7 px-2 border-slate-200 text-[#0A0A0A] text-xs"}>
                                   {r.sq3r?.enabled && <Check className="w-3 h-3 mr-1" />} SQ3R
                                 </Button>
                               </div>
@@ -325,7 +325,7 @@ export default function WorksheetEditor() {
                   <AddRowButton onClick={() => upd(`target_mingguan[${bi}].rows`, [...block.rows, emptyPlanningRow()])} testid={`pl-${bi}-addrow`} label="Tambah Modul/Baris" />
                 </div>
               ))}
-              <Button type="button" variant="outline" onClick={() => upd("target_mingguan", [...data.target_mingguan, { mata_kuliah: "", rows: [emptyPlanningRow()] }])} data-testid="pl-add-block" className="border-dashed border-slate-300 text-[#4F46E5] hover:bg-[#E0E7FF]">
+              <Button type="button" variant="outline" onClick={() => upd("target_mingguan", [...data.target_mingguan, { mata_kuliah: "", rows: [emptyPlanningRow()] }])} data-testid="pl-add-block" className="border-dashed border-slate-300 text-[#0A0A0A] hover:bg-[#F4F4F5]">
                 <Plus className="w-4 h-4 mr-1.5" /> Tambah Blok Mata Kuliah
               </Button>
             </div>
@@ -334,8 +334,8 @@ export default function WorksheetEditor() {
           {/* 5. Hasil Monitoring & SQ3R */}
           <SectionCard num="5" icon={Activity} title="Hasil Monitoring & SQ3R" subtitle="Ringkasan monitoring dan SQ3R yang telah Anda isi per modul">
             {progress.length > 0 && (
-              <div className="mb-6 rounded-lg bg-[#EEF2FF] border border-slate-200 p-5" data-testid="progress-panel">
-                <div className="flex items-center gap-2 mb-4"><Gauge className="w-4.5 h-4.5 text-[#4F46E5]" /><h4 className="font-heading font-bold text-slate-800">Progres Belajar</h4><span className="text-xs text-slate-400">(dari Ketercapaian monitoring)</span></div>
+              <div className="mb-6 rounded-lg bg-[#FAFAFA] border border-slate-200 p-5" data-testid="progress-panel">
+                <div className="flex items-center gap-2 mb-4"><Gauge className="w-4.5 h-4.5 text-[#0A0A0A]" /><h4 className="font-heading font-bold text-slate-800">Progres Belajar</h4><span className="text-xs text-slate-400">(dari Ketercapaian monitoring)</span></div>
                 <div className="flex flex-wrap gap-6">
                   {progress.map((c, i) => <div key={i} data-testid={`progress-ring-${i}`}><ProgressRing pct={c.pct} label={c.mata_kuliah} sub={`${c.done}/${c.total} minggu`} /></div>)}
                 </div>
@@ -349,13 +349,13 @@ export default function WorksheetEditor() {
                   <div key={i} className="border border-slate-200 rounded-md overflow-hidden">
                     <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center gap-2">
                       <span className="font-heading font-bold text-slate-800 text-sm">{res.mata_kuliah || "Mata kuliah"}</span>
-                      {res.minggu && <span className="text-xs bg-[#E0E7FF] text-[#4F46E5] px-2 py-0.5 rounded-full">Minggu {res.minggu}</span>}
+                      {res.minggu && <span className="text-xs bg-[#F4F4F5] text-[#0A0A0A] px-2 py-0.5 rounded-full">Minggu {res.minggu}</span>}
                       {res.target && <span className="text-xs text-slate-500 truncate">· {res.target}</span>}
                     </div>
                     <div className="p-4 space-y-4">
                       {res.monitoring?.enabled && (
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-wide text-[#4F46E5] mb-2">Monitoring</p>
+                          <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">Monitoring</p>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1.5 text-sm">
                             <div><span className="text-slate-400 text-xs block">Halaman (T/R)</span>{(res.monitoring.halaman_target || "-")}/{(res.monitoring.halaman_realisasi || "-")}</div>
                             <div><span className="text-slate-400 text-xs block">Waktu (T/R)</span>{(res.monitoring.waktu_target || "-")}/{(res.monitoring.waktu_realisasi || "-")}</div>
@@ -368,7 +368,7 @@ export default function WorksheetEditor() {
                       )}
                       {res.sq3r?.enabled && (
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-wide text-[#4F46E5] mb-2">SQ3R</p>
+                          <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">SQ3R</p>
                           <div className="text-sm space-y-1 text-slate-700">
                             <p><span className="text-slate-400">Judul BMP:</span> {res.sq3r.survey.judul_bmp || "-"} · <span className="text-slate-400">Modul:</span> {res.sq3r.survey.judul_modul || "-"}</p>
                             <p><span className="text-slate-400">Questions:</span> {(res.sq3r.questions || []).filter((x) => x.trim()).length} · <span className="text-slate-400">Recite:</span> {(res.sq3r.recite || []).filter((x) => x.trim()).length} · <span className="text-slate-400">Belum dipahami:</span> {(res.sq3r.review.belum_dipahami || []).filter((x) => x.trim()).length}</p>
@@ -389,7 +389,7 @@ export default function WorksheetEditor() {
 
           <div className="flex justify-end gap-3 pb-12">
             <Button variant="outline" onClick={() => navigate(`/worksheet/${id}/view`)} className="border-slate-200" data-testid="bottom-preview-button"><Eye className="w-4 h-4 mr-1.5" /> Pratinjau & Unduh PDF</Button>
-            <Button onClick={() => doSave(false)} disabled={saving} className="bg-[#4F46E5] hover:bg-[#4338CA] text-white" data-testid="bottom-save-button">{saving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />} Simpan</Button>
+            <Button onClick={() => doSave(false)} disabled={saving} className="bg-[#0A0A0A] hover:bg-[#000000] text-white" data-testid="bottom-save-button">{saving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />} Simpan</Button>
           </div>
         </div>
       </main>
@@ -408,7 +408,7 @@ export default function WorksheetEditor() {
 
               {dlg.type === "monitoring" ? (
                 <div className="space-y-4">
-                  <Button type="button" variant="outline" size="sm" onClick={salinRencana} data-testid="salin-rencana-button" className="border-dashed border-[#4F46E5] text-[#4F46E5] hover:bg-[#E0E7FF]">
+                  <Button type="button" variant="outline" size="sm" onClick={salinRencana} data-testid="salin-rencana-button" className="border-dashed border-[#0A0A0A] text-[#0A0A0A] hover:bg-[#F4F4F5]">
                     <Copy className="w-3.5 h-3.5 mr-1.5" /> Salin dari Rencana (target halaman, jam, media)
                   </Button>
                   <div className="grid sm:grid-cols-2 gap-4">
@@ -431,7 +431,7 @@ export default function WorksheetEditor() {
               ) : (
                 <div className="space-y-5">
                   <div>
-                    <p className="font-heading font-bold text-[#4F46E5] mb-2 text-sm">Survey</p>
+                    <p className="font-heading font-bold text-[#0A0A0A] mb-2 text-sm">Survey</p>
                     <div className="grid sm:grid-cols-2 gap-3">
                       {[["Judul BMP", "judul_bmp", "sv-judul"], ["Nama Penulis BMP", "penulis_bmp", "sv-penulis"], ["Jumlah SKS", "jumlah_sks", "sv-sks"], ["Jumlah Modul", "jumlah_modul", "sv-modul"], ["Judul Modul", "judul_modul", "sv-judulmodul"], ["Jumlah Halaman", "jumlah_halaman", "sv-halaman"]].map(([lbl, key, tid]) => (
                         <MField key={key} label={lbl} value={curRow.sq3r.survey[key]} onChange={(v) => upd(`target_mingguan[${dlg.bi}].rows[${dlg.ri}].sq3r.survey.${key}`, v)} testid={tid} />
@@ -455,7 +455,7 @@ export default function WorksheetEditor() {
 
               <DialogFooter className="gap-2 sm:gap-2">
                 <Button type="button" variant="outline" onClick={clearDialogData} data-testid="dialog-clear-button" className="border-slate-200 text-red-500 hover:bg-red-50 hover:text-red-600 mr-auto"><Trash2 className="w-4 h-4 mr-1.5" /> Hapus Data</Button>
-                <Button type="button" onClick={() => { setDlg(null); toast.success("Tersimpan"); }} data-testid="dialog-done-button" className="bg-[#4F46E5] hover:bg-[#4338CA] text-white"><Check className="w-4 h-4 mr-1.5" /> Selesai</Button>
+                <Button type="button" onClick={() => { setDlg(null); toast.success("Tersimpan"); }} data-testid="dialog-done-button" className="bg-[#0A0A0A] hover:bg-[#000000] text-white"><Check className="w-4 h-4 mr-1.5" /> Selesai</Button>
               </DialogFooter>
             </>
           )}

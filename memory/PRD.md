@@ -48,18 +48,17 @@ Aplikasi web untuk mahasiswa Universitas Terbuka membuat "Lembar Kerja Rencana B
 - Student: NIM `0666652216` / `student123`
 
 ## UI/UX Redesign (Jul 2025) — Increment 1 IMPLEMENTED
-- New design system "UT Modern": fonts Sora (heading) + Plus Jakarta Sans (body); indigo palette (#4F46E5 primary, brand-gradient), soft indigo-tinted shadows, larger radius (--radius 0.85rem, rounded-2xl cards). Files: index.css, tailwind.config.js, public/index.html.
-- Global color/font reskin applied to ALL pages (Login, Register, Dashboard, Profile, WorksheetEditor, WorksheetView, AdminPanel, TopNav, DashboardLayout) — old hex (#404080/#29166F/#EAEAF2/etc.) replaced with indigo tokens.
-- StatCard: color variants (indigo/teal/amber/coral) + soft shadow. ProgressRing: indigo/teal colors.
-- Login/Register: modern split-screen hero (brand-gradient + warm study image + feature bullets), rounded-xl inputs.
-- DashboardLayout: refreshed sidebar (gradient logo, rounded-xl active) + NEW mobile bottom navigation (Beranda / Buat FAB / Profil).
-- Dashboard: hero greeting ("Halo, {nama}"), dynamic motivation message, gamification (streak, achievement badges 6, ketercapaian). New lib/gamification.js (presentational, uses existing data — no backend change).
-- Env restore: /app/backend/.env and /app/frontend/.env were MISSING (env reset) causing backend crash (KeyError MONGO_URL) + frontend API failures. Recreated: backend MONGO_URL(local)/DB_NAME(test_database)/JWT_SECRET/CORS_ORIGINS; frontend REACT_APP_BACKEND_URL=preview endpoint. Seeded sample student data via /tmp/seed.py.
-- Verified visually: Login, Dashboard (desktop+mobile), Profile, Editor all render correctly.
+### Direction PIVOT (per user reference mockup): MONOCHROME (black & white) minimalist
+- Palette pivoted from indigo -> monochrome (primary #0A0A0A / neutral grays / white bg #F4F4F5). index.css + tailwind brand scale = grayscale. All hardcoded hex reskinned indigo->mono across all pages.
+- Fonts kept: Sora (heading) + Plus Jakarta Sans (body).
+- DashboardLayout REBUILT to match mockup: white sidebar (UT square logo, "Worksheet UT / Academic Portal"), nav Dashboard/Worksheets/Target Plan/SQ3R Method/Profile (active = solid black), "New Worksheet" black button, Help Center + Logout footer. Topbar = search input + bell + user(name/NIM/avatar). Props changed: nav, primaryAction, headerRight, searchValue, onSearchChange (title/subtitle removed; mobile BottomNav removed, uses hamburger+sheet).
+- Dashboard REBUILT to match mockup: black hero "Halo, {name}!" + grad-cap watermark; 4 stat cards (Total Worksheets/Active Courses/Study Hours + Target Completion black ProgressRing); Streak Belajar day timeline (Mon-Fri check/current/future) + "{streak} Hari Beruntun"; Quick Actions 2x2 (New Entry=create, Schedule/Reports scroll/toast, Settings->profile); Recent Worksheets list w/ per-worksheet progress bar + open/delete; Today's Focus from today's reminders. Search filters the list.
+- ProgressRing: monochrome black arc. Profile: nav updated to 5-item mockup style + primaryAction.
+- Env restore (still valid): backend/.env + frontend/.env were missing; recreated. Sample student data seeded via /tmp/seed.py.
+- Verified via screenshots: Dashboard desktop matches mockup closely. NOT yet run E2E testing agent.
 
-### Redesign Backlog (Increment 2 — not yet done, deeper structural)
-- Worksheet Editor: convert long form -> stepper + sticky action bar; responsive matrix (table->cards on mobile); SQ3R color-coded stepped cards.
-- Admin Panel: refreshed stat cards + chart colors + searchable table -> card list on mobile.
-- Worksheet View/PDF: modern paper layout; verify print styles.
-- Optional: Dark mode (P2).
+### Redesign Backlog (deeper structural, mono style)
+- Worksheet Editor / View / Admin: reskinned to mono but layout not restructured to match new language.
+- Optional: dark mode.
+
 

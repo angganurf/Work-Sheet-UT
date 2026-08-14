@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center bg-[#F7F7FB]">
-    <Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" />
+    <Loader2 className="w-8 h-8 animate-spin text-[#0A0A0A]" />
   </div>
 );
 
