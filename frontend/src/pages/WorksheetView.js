@@ -59,6 +59,15 @@ export default function WorksheetView() {
   const id_ = profile?.identitas || {};
   const progress = computeCourseProgress(data.target_mingguan);
   const results = collectResults(data.target_mingguan);
+  // Group results by mata kuliah (preserve order of appearance) so that
+  // each course renders ONE card; each week becomes a row in its table.
+  const resultsByCourse = [];
+  const courseIdx = {};
+  results.forEach((r) => {
+    const key = (r.mata_kuliah || "").trim() || "Mata Kuliah";
+    if (!(key in courseIdx)) { courseIdx[key] = resultsByCourse.length; resultsByCourse.push({ mata_kuliah: key, items: [] }); }
+    resultsByCourse[courseIdx[key]].items.push(r);
+  });
   const planningBlocks = (data.target_mingguan || []).filter(
     (b) => (b.mata_kuliah || "").trim() || (b.rows || []).some((r) => [r.minggu, r.target, r.halaman, r.media, r.jam].some((v) => (v || "").toString().trim()))
   );
@@ -132,49 +141,81 @@ export default function WorksheetView() {
               <div className="flex flex-wrap gap-6">{progress.map((c, i) => <div key={i} data-testid={`progress-ring-${i}`}><ProgressRing pct={c.pct} label={c.mata_kuliah} sub={`${c.done}/${c.total} minggu`} /></div>)}</div>
             </div>
           )}
-          {results.length === 0 ? <p className="text-sm text-slate-400">-</p> : results.map((res, i) => (
-            <div key={i} className="mb-5 border border-slate-200 rounded-md overflow-hidden print-break">
-              <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 text-sm">
-                <span className="font-heading font-bold text-slate-800">{res.mata_kuliah || "Mata kuliah"}</span>
-                {res.minggu && <span className="ml-2 text-xs text-[#0A0A0A]">Minggu {res.minggu}</span>}
-                {res.target && <span className="ml-2 text-xs text-slate-500">· {res.target}</span>}
-              </div>
-              <div className="p-4 space-y-4">
-                {res.monitoring?.enabled && (
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">Monitoring</p>
-                    <table className="w-full border-collapse text-xs">
-                      <thead><tr className="bg-[#F4F4F5] text-[#0A0A0A]"><th colSpan={2} className={`${cellPad} text-center`}>Jumlah Halaman</th><th colSpan={2} className={`${cellPad} text-center`}>Waktu Belajar</th><th className={cellPad}>Media</th><th className={cellPad}>Ketercapaian</th><th className={cellPad}>Penyebab</th><th className={cellPad}>Solusi</th></tr>
-                        <tr className="bg-[#F4F4F5] text-[#0A0A0A]"><th className={cellPad}>Target</th><th className={cellPad}>Realisasi</th><th className={cellPad}>Target</th><th className={cellPad}>Realisasi</th><th className={cellPad}></th><th className={cellPad}></th><th className={cellPad}></th><th className={cellPad}></th></tr>
-                      </thead>
-                      <tbody><tr>
-                        <td className={`${cellPad} text-center`}>{res.monitoring.halaman_target || "-"}</td><td className={`${cellPad} text-center`}>{res.monitoring.halaman_realisasi || "-"}</td>
-                        <td className={`${cellPad} text-center`}>{res.monitoring.waktu_target || "-"}</td><td className={`${cellPad} text-center`}>{res.monitoring.waktu_realisasi || "-"}</td>
-                        <td className={cellPad}>{res.monitoring.media || "-"}</td><td className={`${cellPad} text-center`}>{res.monitoring.ketercapaian || "-"}</td><td className={cellPad}>{res.monitoring.penyebab || "-"}</td><td className={cellPad}>{res.monitoring.solusi || "-"}</td>
-                      </tr></tbody>
-                    </table>
-                  </div>
-                )}
-                {res.sq3r?.enabled && (
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">SQ3R</p>
-                    <div className="text-sm">
-                      <p className="font-semibold text-slate-700 mt-1 mb-1">Survey</p>
-                      <Row label="Judul BMP" value={res.sq3r.survey.judul_bmp} /><Row label="Penulis BMP" value={res.sq3r.survey.penulis_bmp} /><Row label="Judul Modul" value={res.sq3r.survey.judul_modul} /><Row label="Jumlah Halaman" value={res.sq3r.survey.jumlah_halaman} />
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mt-2 mb-1">Judul Kegiatan Belajar</p><Bullets items={res.sq3r.survey.judul_kegiatan} />
-                      <p className="font-semibold text-slate-700 mt-3 mb-1">Questions</p><Bullets items={res.sq3r.questions} />
-                      <p className="font-semibold text-slate-700 mt-3 mb-1">Read</p><p className="text-sm text-slate-800 whitespace-pre-wrap">{res.sq3r.read || "-"}</p>
-                      <p className="font-semibold text-slate-700 mt-3 mb-1">Recite</p><Bullets items={res.sq3r.recite} />
-                      <p className="font-semibold text-slate-700 mt-3 mb-1">Review</p>
-                      <p className="text-xs text-slate-500 mb-1">a. Terjawab</p><Bullets items={res.sq3r.review.terjawab} />
-                      <p className="text-xs text-slate-500 mt-1 mb-1">b. Dipahami</p><Bullets items={res.sq3r.review.dipahami} />
-                      <p className="text-xs text-slate-500 mt-1 mb-1">c. Belum dipahami</p><Bullets items={res.sq3r.review.belum_dipahami} />
+          {resultsByCourse.length === 0 ? <p className="text-sm text-slate-400">-</p> : resultsByCourse.map((course, ci) => {
+            const monRows = course.items.filter((r) => r.monitoring?.enabled);
+            const sqRows = course.items.filter((r) => r.sq3r?.enabled);
+            return (
+              <div key={ci} className="mb-5 border border-slate-200 rounded-md overflow-hidden print-break">
+                <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                  <span className="font-heading font-bold text-slate-800">{course.mata_kuliah}</span>
+                </div>
+                <div className="p-4 space-y-5">
+                  {monRows.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">Monitoring</p>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-xs">
+                          <thead>
+                            <tr className="bg-[#F4F4F5] text-[#0A0A0A]">
+                              <th rowSpan={2} className={`${cellPad} text-center align-middle w-28`}>Minggu Ke-</th>
+                              <th colSpan={2} className={`${cellPad} text-center`}>Jumlah Halaman</th>
+                              <th colSpan={2} className={`${cellPad} text-center`}>Waktu Belajar</th>
+                              <th rowSpan={2} className={`${cellPad} align-middle`}>Media</th>
+                              <th rowSpan={2} className={`${cellPad} align-middle`}>Ketercapaian</th>
+                              <th rowSpan={2} className={`${cellPad} align-middle`}>Penyebab</th>
+                              <th rowSpan={2} className={`${cellPad} align-middle`}>Solusi</th>
+                            </tr>
+                            <tr className="bg-[#F4F4F5] text-[#0A0A0A]">
+                              <th className={cellPad}>Target</th><th className={cellPad}>Realisasi</th>
+                              <th className={cellPad}>Target</th><th className={cellPad}>Realisasi</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {monRows.map((r, ri) => (
+                              <tr key={ri}>
+                                <td className={`${cellPad} text-center align-middle`}>
+                                  <span className="font-semibold text-slate-800">{r.minggu ? `Minggu ${r.minggu}` : "-"}</span>
+                                  {r.target && <span className="block text-[11px] text-slate-400">{r.target}</span>}
+                                </td>
+                                <td className={`${cellPad} text-center`}>{r.monitoring.halaman_target || "-"}</td>
+                                <td className={`${cellPad} text-center`}>{r.monitoring.halaman_realisasi || "-"}</td>
+                                <td className={`${cellPad} text-center`}>{r.monitoring.waktu_target || "-"}</td>
+                                <td className={`${cellPad} text-center`}>{r.monitoring.waktu_realisasi || "-"}</td>
+                                <td className={`${cellPad} text-center`}>{r.monitoring.media || "-"}</td>
+                                <td className={`${cellPad} text-center`}>{r.monitoring.ketercapaian || "-"}</td>
+                                <td className={cellPad}>{r.monitoring.penyebab || "-"}</td>
+                                <td className={cellPad}>{r.monitoring.solusi || "-"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {sqRows.map((res, si) => (
+                    <div key={si}>
+                      <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">
+                        SQ3R{res.minggu ? ` · Minggu ${res.minggu}` : ""}
+                      </p>
+                      <div className="text-sm">
+                        <p className="font-semibold text-slate-700 mt-1 mb-1">Survey</p>
+                        <Row label="Judul BMP" value={res.sq3r.survey.judul_bmp} /><Row label="Penulis BMP" value={res.sq3r.survey.penulis_bmp} /><Row label="Judul Modul" value={res.sq3r.survey.judul_modul} /><Row label="Jumlah Halaman" value={res.sq3r.survey.jumlah_halaman} />
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mt-2 mb-1">Judul Kegiatan Belajar</p><Bullets items={res.sq3r.survey.judul_kegiatan} />
+                        <p className="font-semibold text-slate-700 mt-3 mb-1">Questions</p><Bullets items={res.sq3r.questions} />
+                        <p className="font-semibold text-slate-700 mt-3 mb-1">Read</p><p className="text-sm text-slate-800 whitespace-pre-wrap">{res.sq3r.read || "-"}</p>
+                        <p className="font-semibold text-slate-700 mt-3 mb-1">Recite</p><Bullets items={res.sq3r.recite} />
+                        <p className="font-semibold text-slate-700 mt-3 mb-1">Review</p>
+                        <p className="text-xs text-slate-500 mb-1">a. Terjawab</p><Bullets items={res.sq3r.review.terjawab} />
+                        <p className="text-xs text-slate-500 mt-1 mb-1">b. Dipahami</p><Bullets items={res.sq3r.review.dipahami} />
+                        <p className="text-xs text-slate-500 mt-1 mb-1">c. Belum dipahami</p><Bullets items={res.sq3r.review.belum_dipahami} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* 6 Peta konsep */}
           <SectionTitle num="6" title="Peta Konsep" />
