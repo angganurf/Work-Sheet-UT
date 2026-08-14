@@ -4,7 +4,7 @@ import api, { formatApiErrorDetail } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ProgressRing } from "@/components/ProgressRing";
-import { isProfileComplete, overallProgress, buildReminders, computeCourseProgress } from "@/lib/worksheet";
+import { isProfileComplete, overallProgress, buildReminders, computeCourseProgress, countEmptyStudyWeeks } from "@/lib/worksheet";
 import { computeStreak } from "@/lib/gamification";
 import { Button } from "@/components/ui/button";
 import {
@@ -264,6 +264,7 @@ export default function Dashboard() {
             <div className="space-y-3">
               {filtered.map((w) => {
                 const pct = worksheetPct(w);
+                const empty = countEmptyStudyWeeks(w.data);
                 return (
                   <div key={w.id} data-testid={`worksheet-card-${w.id}`}
                     className="group bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 hover:border-neutral-900 transition-colors shadow-soft">
@@ -272,7 +273,15 @@ export default function Dashboard() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <h4 className="font-semibold text-neutral-900 truncate">{w.title}</h4>
-                      <p className="text-xs text-neutral-400 truncate mt-0.5">{worksheetSubtitle(w)}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <p className="text-xs text-neutral-400 truncate">{worksheetSubtitle(w)}</p>
+                        {empty.count > 0 && (
+                          <span data-testid={`empty-weeks-badge-${w.id}`} title={`Minggu tanpa jam belajar: ${empty.weekNums.join(", ")}`}
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-100 rounded-full px-2 py-0.5 shrink-0">
+                            <AlertTriangle className="w-3 h-3" /> {empty.count} minggu kosong
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="hidden sm:block w-40 shrink-0">
                       <div className="flex items-center justify-between mb-1.5">

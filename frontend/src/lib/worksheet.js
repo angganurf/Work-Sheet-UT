@@ -179,3 +179,23 @@ export function courseOptions(profile) {
     .filter((m) => (m.nama || "").trim())
     .map((m) => (m.sks ? `${m.nama} (${m.sks})` : m.nama));
 }
+
+
+// A weekly hour value counts as "no study time" when empty or 0.
+export function isNoStudyHour(v) {
+  const s = String(v ?? "").trim();
+  return s === "" || parseFloat(s.replace(",", ".")) === 0;
+}
+
+// Weeks that have NO study hours across ALL courses in jadwal_semester.
+export function countEmptyStudyWeeks(data) {
+  const rows = (data && data.jadwal_semester) || [];
+  const weeks = Number(data && data.weeks) || (rows[0] && rows[0].minggu ? rows[0].minggu.length : 0);
+  if (!rows.length || !weeks) return { count: 0, total: weeks || 0, weekNums: [] };
+  const weekNums = [];
+  for (let w = 0; w < weeks; w++) {
+    const anyHours = rows.some((r) => !isNoStudyHour(r.minggu ? r.minggu[w] : ""));
+    if (!anyHours) weekNums.push(w + 1);
+  }
+  return { count: weekNums.length, total: weeks, weekNums };
+}

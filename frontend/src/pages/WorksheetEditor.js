@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   Loader2, Save, Eye, Plus, Trash2, Check, ArrowLeft, Minus, Copy,
-  BookOpen, CalendarDays, ClipboardList, Network, AlertTriangle, UserCog, Activity, Gauge, CheckCircle2,
+  BookOpen, CalendarDays, ClipboardList, Network, AlertTriangle, UserCog, Activity, Gauge, CheckCircle2, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -163,6 +163,24 @@ export default function WorksheetEditor() {
   const removeWeek = () => {
     setData((prev) => { const w = Number(prev.weeks) || 9; if (w <= 1) return prev; const n = cloneDeep(prev); n.weeks = w - 1; n.jadwal_semester.forEach((r) => r.minggu.pop()); return n; });
     setDirty(true);
+  };
+  // Spread study hours into empty/zero weeks (non-destructive: only fills blanks).
+  const spreadStudyHours = () => {
+    setData((prev) => {
+      const n = cloneDeep(prev);
+      const wk = Number(n.weeks) || 9;
+      (n.jadwal_semester || []).forEach((r) => {
+        if (!Array.isArray(r.minggu)) r.minggu = Array(wk).fill("");
+        const nums = r.minggu
+          .map((v) => parseFloat(String(v).replace(",", ".")))
+          .filter((x) => !isNaN(x) && x > 0);
+        const avg = nums.length ? Math.max(1, Math.round(nums.reduce((a, b) => a + b, 0) / nums.length)) : 2;
+        for (let w = 0; w < wk; w++) if (isNoStudy(r.minggu[w])) r.minggu[w] = String(avg);
+      });
+      return n;
+    });
+    setDirty(true);
+    toast.success("Jam belajar disebar ke minggu yang masih kosong");
   };
 
   const openDialog = (bi, ri, type) => {
@@ -311,6 +329,10 @@ export default function WorksheetEditor() {
                           <span key={n} className="inline-flex items-center justify-center min-w-[26px] h-6 px-2 rounded-full bg-rose-100 text-rose-700 text-xs font-semibold">M{n}</span>
                         ))}
                       </div>
+                      <button type="button" onClick={spreadStudyHours} data-testid="distribute-hours-button"
+                        className="mt-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-neutral-900 text-white text-xs font-semibold hover:bg-black transition-colors active:scale-[0.98]">
+                        <Sparkles className="w-3.5 h-3.5" /> Sebar jam ke minggu kosong
+                      </button>
                     </div>
                   </div>
                   {perCourseEmpty.some((c) => c > 0) && (
