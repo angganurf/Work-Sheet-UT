@@ -3,9 +3,8 @@ import { useNavigate } from "react-router-dom";
 import api, { formatApiErrorDetail } from "@/lib/api";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { StatCard } from "@/components/StatCard";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Search, Eye, Users, FileText, LayoutGrid, BarChart3, Sigma } from "lucide-react";
+import { Loader2, Eye, Users, FileText, LayoutGrid, BarChart3, Sigma } from "lucide-react";
 import { toast } from "sonner";
 import {
   Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, CartesianGrid,
@@ -76,10 +75,18 @@ export default function AdminPanel() {
 
   const avg = stats.total_students ? (stats.total_worksheets / stats.total_students).toFixed(1) : "0";
 
-  const nav = [{ label: "Dashboard", icon: LayoutGrid, to: "/admin", testid: "admin-dashboard" }];
+  const nav = [
+    { label: "Dashboard", icon: LayoutGrid, to: "/admin", testid: "admin-dashboard", match: (p) => p === "/admin" },
+    { label: "Lembar Kerja", icon: FileText, testid: "admin-worksheets", onClick: () => document.getElementById("admin-worksheets")?.scrollIntoView({ behavior: "smooth" }) },
+  ];
 
   return (
-    <DashboardLayout nav={nav} title="Dashboard Admin" subtitle="Ringkasan seluruh aktivitas mahasiswa">
+    <DashboardLayout
+      nav={nav}
+      searchValue={search}
+      onSearchChange={setSearch}
+      searchPlaceholder="Cari NIM, nama, atau judul…"
+    >
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <StatCard icon={Users} label="Total Mahasiswa" value={stats.total_students} caption="Akun mahasiswa terdaftar" testid="stat-total-students" />
@@ -88,7 +95,7 @@ export default function AdminPanel() {
       </div>
 
       {/* Chart */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-8">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 mb-8 shadow-soft">
         <div className="flex items-center gap-2 mb-1">
           <BarChart3 className="w-5 h-5 text-[#0A0A0A]" />
           <h3 className="font-heading font-bold text-slate-800">Lembar Kerja Dibuat</h3>
@@ -117,18 +124,9 @@ export default function AdminPanel() {
       </div>
 
       {/* Table */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <h2 className="font-heading text-lg font-bold tracking-tight text-slate-800">Seluruh Lembar Kerja</h2>
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari NIM, nama, atau judul…"
-            data-testid="admin-search-input"
-            className="pl-10 bg-white focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A]"
-          />
-        </div>
+      <div id="admin-worksheets" className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <h2 className="font-heading text-xl font-bold tracking-tight text-slate-900">Seluruh Lembar Kerja</h2>
+        <span className="text-sm text-slate-400">{rows ? `${rows.length} lembar kerja` : ""}</span>
       </div>
 
       {rows === null ? (
@@ -136,11 +134,11 @@ export default function AdminPanel() {
           <Loader2 className="w-7 h-7 animate-spin text-[#0A0A0A]" />
         </div>
       ) : rows.length === 0 ? (
-        <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl bg-white text-slate-400">
+        <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-2xl bg-white text-slate-400">
           Tidak ada lembar kerja ditemukan.
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-soft">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse" data-testid="admin-table">
               <thead>

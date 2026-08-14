@@ -98,6 +98,8 @@ const CourseSelect = ({ value, onChange, options, testid, placeholder = "Pilih m
 };
 
 const cellInput = "w-full bg-transparent px-2 py-1.5 text-sm outline-none focus:bg-[#F4F4F5]/40 rounded";
+// A weekly hour cell counts as "no study time" when it's empty or 0.
+const isNoStudy = (v) => { const s = String(v ?? "").trim(); return s === "" || parseFloat(s.replace(",", ".")) === 0; };
 
 /* ---------- main ---------- */
 export default function WorksheetEditor() {
@@ -190,6 +192,15 @@ export default function WorksheetEditor() {
   const profileOk = isProfileComplete(profile);
   const progress = computeCourseProgress(data.target_mingguan);
   const results = collectResults(data.target_mingguan);
+  // Group results by mata kuliah so each course renders ONE monitoring table
+  // (one row per week), matching the Worksheet View layout.
+  const resultsByCourse = [];
+  const courseIdx = {};
+  results.forEach((r) => {
+    const key = (r.mata_kuliah || "").trim() || "Mata Kuliah";
+    if (!(key in courseIdx)) { courseIdx[key] = resultsByCourse.length; resultsByCourse.push({ mata_kuliah: key, items: [] }); }
+    resultsByCourse[courseIdx[key]].items.push(r);
+  });
   const curRow = dlg ? data.target_mingguan[dlg.bi].rows[dlg.ri] : null;
   const mkLabel = dlg ? (data.target_mingguan[dlg.bi].mata_kuliah || "Mata kuliah") : "";
 
@@ -263,7 +274,7 @@ export default function WorksheetEditor() {
                   {data.jadwal_semester.map((row, i) => (
                     <tr key={i} className="border-t border-slate-200">
                       <td className="p-1.5 border-r border-slate-100 align-middle"><CourseSelect value={row.mata_kuliah} onChange={(v) => upd(`jadwal_semester[${i}].mata_kuliah`, v)} options={options} testid={`js-mk-${i}`} /></td>
-                      {row.minggu.map((val, w) => <td key={w} className="p-1 border-r border-slate-100"><input className={`${cellInput} text-center px-0`} value={val} onChange={(e) => upd(`jadwal_semester[${i}].minggu[${w}]`, e.target.value)} data-testid={`js-${i}-w${w}`} /></td>)}
+                      {row.minggu.map((val, w) => <td key={w} className={`p-1 border-r border-slate-100 ${isNoStudy(val) ? "bg-rose-100" : ""}`}><input className={`${cellInput} text-center px-0`} value={val} onChange={(e) => upd(`jadwal_semester[${i}].minggu[${w}]`, e.target.value)} data-testid={`js-${i}-w${w}`} /></td>)}
                       <td className="p-1 border-r border-slate-100"><input className={cellInput} value={row.catatan} onChange={(e) => upd(`jadwal_semester[${i}].catatan`, e.target.value)} data-testid={`js-catatan-${i}`} placeholder="Senin" /></td>
                       <td className="p-1 text-center"><button type="button" onClick={() => upd("jadwal_semester", data.jadwal_semester.filter((_, idx) => idx !== i))} disabled={data.jadwal_semester.length === 1} className="text-slate-300 hover:text-red-500 disabled:opacity-30"><Trash2 className="w-4 h-4" /></button></td>
                     </tr>
@@ -341,43 +352,78 @@ export default function WorksheetEditor() {
                 </div>
               </div>
             )}
-            {results.length === 0 ? (
+            {resultsByCourse.length === 0 ? (
               <p className="text-sm text-slate-400" data-testid="results-empty">Belum ada. Klik tombol <b>Monitoring</b> atau <b>SQ3R</b> pada tabel di atas untuk menambahkan.</p>
             ) : (
-              <div className="space-y-4" data-testid="results-list">
-                {results.map((res, i) => (
-                  <div key={i} className="border border-slate-200 rounded-md overflow-hidden">
-                    <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center gap-2">
-                      <span className="font-heading font-bold text-slate-800 text-sm">{res.mata_kuliah || "Mata kuliah"}</span>
-                      {res.minggu && <span className="text-xs bg-[#F4F4F5] text-[#0A0A0A] px-2 py-0.5 rounded-full">Minggu {res.minggu}</span>}
-                      {res.target && <span className="text-xs text-slate-500 truncate">· {res.target}</span>}
-                    </div>
-                    <div className="p-4 space-y-4">
-                      {res.monitoring?.enabled && (
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">Monitoring</p>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1.5 text-sm">
-                            <div><span className="text-slate-400 text-xs block">Halaman (T/R)</span>{(res.monitoring.halaman_target || "-")}/{(res.monitoring.halaman_realisasi || "-")}</div>
-                            <div><span className="text-slate-400 text-xs block">Waktu (T/R)</span>{(res.monitoring.waktu_target || "-")}/{(res.monitoring.waktu_realisasi || "-")}</div>
-                            <div><span className="text-slate-400 text-xs block">Media</span>{res.monitoring.media || "-"}</div>
-                            <div><span className="text-slate-400 text-xs block">Ketercapaian</span><span className={res.monitoring.ketercapaian === "Ya" ? "text-green-600 font-semibold" : res.monitoring.ketercapaian === "Tidak" ? "text-amber-600 font-semibold" : ""}>{res.monitoring.ketercapaian || "-"}</span></div>
-                            <div className="col-span-2"><span className="text-slate-400 text-xs block">Penyebab</span>{res.monitoring.penyebab || "-"}</div>
-                            <div className="col-span-2"><span className="text-slate-400 text-xs block">Solusi</span>{res.monitoring.solusi || "-"}</div>
+              <div className="space-y-5" data-testid="results-list">
+                {resultsByCourse.map((course, ci) => {
+                  const monRows = course.items.filter((r) => r.monitoring?.enabled);
+                  const sqRows = course.items.filter((r) => r.sq3r?.enabled);
+                  const mcell = "border border-slate-300 p-2 text-xs";
+                  return (
+                    <div key={ci} className="border border-slate-200 rounded-md overflow-hidden">
+                      <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                        <span className="font-heading font-bold text-slate-800 text-sm">{course.mata_kuliah}</span>
+                      </div>
+                      <div className="p-4 space-y-5">
+                        {monRows.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">Monitoring</p>
+                            <div className="overflow-x-auto">
+                              <table className="w-full border-collapse">
+                                <thead>
+                                  <tr className="bg-[#F4F4F5] text-[#0A0A0A]">
+                                    <th rowSpan={2} className={`${mcell} text-center align-middle w-28`}>Minggu Ke-</th>
+                                    <th colSpan={2} className={`${mcell} text-center`}>Jumlah Halaman</th>
+                                    <th colSpan={2} className={`${mcell} text-center`}>Waktu Belajar</th>
+                                    <th rowSpan={2} className={`${mcell} align-middle`}>Media</th>
+                                    <th rowSpan={2} className={`${mcell} align-middle`}>Ketercapaian</th>
+                                    <th rowSpan={2} className={`${mcell} align-middle`}>Penyebab</th>
+                                    <th rowSpan={2} className={`${mcell} align-middle`}>Solusi</th>
+                                  </tr>
+                                  <tr className="bg-[#F4F4F5] text-[#0A0A0A]">
+                                    <th className={mcell}>Target</th><th className={mcell}>Realisasi</th>
+                                    <th className={mcell}>Target</th><th className={mcell}>Realisasi</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {monRows.map((r, ri) => (
+                                    <tr key={ri}>
+                                      <td className={`${mcell} text-center align-middle`}>
+                                        <span className="font-semibold text-slate-800">{r.minggu ? `Minggu ${r.minggu}` : "-"}</span>
+                                        {r.target && <span className="block text-[11px] text-slate-400 truncate max-w-[7rem]">{r.target}</span>}
+                                      </td>
+                                      <td className={`${mcell} text-center`}>{r.monitoring.halaman_target || "-"}</td>
+                                      <td className={`${mcell} text-center`}>{r.monitoring.halaman_realisasi || "-"}</td>
+                                      <td className={`${mcell} text-center`}>{r.monitoring.waktu_target || "-"}</td>
+                                      <td className={`${mcell} text-center`}>{r.monitoring.waktu_realisasi || "-"}</td>
+                                      <td className={`${mcell} text-center`}>{r.monitoring.media || "-"}</td>
+                                      <td className={`${mcell} text-center`}>
+                                        <span className={r.monitoring.ketercapaian === "Ya" ? "text-green-600 font-semibold" : r.monitoring.ketercapaian === "Tidak" ? "text-amber-600 font-semibold" : ""}>{r.monitoring.ketercapaian || "-"}</span>
+                                      </td>
+                                      <td className={mcell}>{r.monitoring.penyebab || "-"}</td>
+                                      <td className={mcell}>{r.monitoring.solusi || "-"}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {res.sq3r?.enabled && (
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">SQ3R</p>
-                          <div className="text-sm space-y-1 text-slate-700">
-                            <p><span className="text-slate-400">Judul BMP:</span> {res.sq3r.survey.judul_bmp || "-"} · <span className="text-slate-400">Modul:</span> {res.sq3r.survey.judul_modul || "-"}</p>
-                            <p><span className="text-slate-400">Questions:</span> {(res.sq3r.questions || []).filter((x) => x.trim()).length} · <span className="text-slate-400">Recite:</span> {(res.sq3r.recite || []).filter((x) => x.trim()).length} · <span className="text-slate-400">Belum dipahami:</span> {(res.sq3r.review.belum_dipahami || []).filter((x) => x.trim()).length}</p>
+                        )}
+
+                        {sqRows.map((res, si) => (
+                          <div key={si}>
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#0A0A0A] mb-2">SQ3R{res.minggu ? ` · Minggu ${res.minggu}` : ""}</p>
+                            <div className="text-sm space-y-1 text-slate-700">
+                              <p><span className="text-slate-400">Judul BMP:</span> {res.sq3r.survey.judul_bmp || "-"} · <span className="text-slate-400">Modul:</span> {res.sq3r.survey.judul_modul || "-"}</p>
+                              <p><span className="text-slate-400">Questions:</span> {(res.sq3r.questions || []).filter((x) => x.trim()).length} · <span className="text-slate-400">Recite:</span> {(res.sq3r.recite || []).filter((x) => x.trim()).length} · <span className="text-slate-400">Belum dipahami:</span> {(res.sq3r.review.belum_dipahami || []).filter((x) => x.trim()).length}</p>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </SectionCard>

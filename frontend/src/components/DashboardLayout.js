@@ -5,6 +5,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, Search, Bell, HelpCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const SidebarContent = ({ nav, primaryAction, onNavigate }) => {
   const { user, logout } = useAuth();
@@ -143,8 +144,9 @@ export const DashboardLayout = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-5 shrink-0">
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             {headerRight}
+            <ThemeToggle />
             <button className="relative text-neutral-500 hover:text-neutral-900 transition-colors" data-testid="notif-button" title="Notifikasi">
               <Bell className="w-5 h-5" />
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-neutral-900 ring-2 ring-[#F4F4F5]" />

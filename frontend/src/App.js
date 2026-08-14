@@ -1,5 +1,6 @@
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Toaster } from "@/components/ui/sonner";
@@ -14,8 +15,9 @@ import AdminPanel from "@/pages/AdminPanel";
 function App() {
   return (
     <div className="App min-h-screen">
-      <AuthProvider>
-        <BrowserRouter>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+        <AuthProvider>
+          <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -72,6 +74,7 @@ function App() {
         </BrowserRouter>
         <Toaster position="top-right" richColors />
       </AuthProvider>
+      </ThemeProvider>
     </div>
   );
 }

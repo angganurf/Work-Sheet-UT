@@ -58,7 +58,14 @@ Aplikasi web untuk mahasiswa Universitas Terbuka membuat "Lembar Kerja Rencana B
 - Verified via screenshots: Dashboard desktop matches mockup closely. NOT yet run E2E testing agent.
 
 ### Redesign Backlog (deeper structural, mono style)
-- Worksheet Editor / View / Admin: reskinned to mono but layout not restructured to match new language.
-- Optional: dark mode.
+- Optional: further polish.
+
+### Increment 3 (Jul 2025) — DONE
+- Worksheet View & Editor "Hasil Monitoring & SQ3R": tabel monitoring dikelompokkan per mata kuliah dengan kolom "Minggu Ke-" (tiap minggu = baris); matkul beda = card/tabel baru. SQ3R ikut dikelompokkan.
+- Admin Panel: monokrom senada (stat cards + chart + tabel rounded-2xl/shadow-soft), search dipindah ke top bar (searchValue/onSearchChange), nav rapi.
+- Dark mode: next-themes ThemeProvider (attribute="class") + ThemeToggle (sun/moon) di top bar. Tema gelap via override global di index.css (.dark) — surfaces/borders/text remap; elemen hitam (buttons/active nav/streak/progress) di-invert jadi putih+ikon gelap; hero tetap gelap. ProgressRing pakai currentColor (text-[#0A0A0A] dark:text-white).
+- Jadwal Per Semester (Editor): sel jam bernilai 0/kosong ditandai bg-rose-100 (dark: rose transparan) = "tidak ada waktu belajar". Helper isNoStudy di WorksheetEditor.
+- Verified via screenshots: dashboard (light+dark), editor section3 pink (light+dark), view grouped monitoring, admin. Lint clean. Tidak ada perubahan backend.
+
 
 

@@ -95,6 +95,78 @@ body {
     }
 }
 
+/* ============================ DARK MODE ============================ */
+/* Monochrome dark theme via global overrides (app uses hardcoded mono
+   utilities, so we remap the common surfaces/text/borders here). */
+.dark body { background-color: #0b0b0d; color: #e4e4e7; }
+
+/* App / page backgrounds + subtle panels + table headers/chips */
+.dark .bg-\[\#F7F7FB\] { background-color: #0b0b0d !important; }
+.dark .bg-\[\#F4F4F5\] { background-color: #0e0e11 !important; }
+.dark .bg-\[\#FAFAFA\] { background-color: #151518 !important; }
+.dark .bg-brand-gradient-soft { background-color: #1f1f24 !important; }
+
+/* Elevated surfaces (cards, inputs, sidebar, popovers) */
+.dark .bg-white { background-color: #17171a !important; }
+.dark .bg-white\/80 { background-color: rgba(23, 23, 26, 0.8) !important; }
+.dark .bg-\[\#F4F4F5\]\/80 { background-color: rgba(11, 11, 13, 0.8) !important; }
+.dark .bg-slate-50,
+.dark .bg-slate-50\/60,
+.dark .bg-slate-50\/70,
+.dark .bg-neutral-50 { background-color: #1e1e22 !important; }
+.dark .bg-neutral-100 { background-color: #26262b !important; }
+
+/* Borders */
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300,
+.dark .border-neutral-200 { border-color: #2a2a30 !important; }
+
+/* Text */
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-neutral-900,
+.dark .text-neutral-800,
+.dark .text-\[\#0A0A0A\],
+.dark .text-\[\#000000\] { color: #ededed !important; }
+.dark .text-slate-700,
+.dark .text-slate-600,
+.dark .text-neutral-700,
+.dark .text-neutral-600 { color: #c7c7cc !important; }
+.dark .text-slate-500,
+.dark .text-slate-400,
+.dark .text-neutral-500,
+.dark .text-neutral-400 { color: #8e8e96 !important; }
+
+/* Inputs */
+.dark input, .dark textarea, .dark select { color: #e5e5e5; }
+.dark input::placeholder, .dark textarea::placeholder { color: #6b6b73 !important; }
+
+/* Black elements (buttons, active nav, progress, streak) -> invert to white
+   so they pop on dark surfaces; force their inner icons/text to dark.
+   Placed AFTER text rules so children win the cascade. */
+.dark .bg-neutral-900,
+.dark .bg-black,
+.dark .bg-\[\#0A0A0A\] { background-color: #fafafa !important; }
+.dark .bg-neutral-900 *,
+.dark .bg-black *,
+.dark .bg-\[\#0A0A0A\] * { color: #0a0a0a !important; }
+.dark .border-neutral-900 { border-color: #fafafa !important; }
+.dark .text-neutral-300 { color: #52525b !important; }
+.dark .bg-rose-100 { background-color: rgba(244, 63, 94, 0.16) !important; }
+
+/* Keep the hero (brand gradient) dark with white text even in dark mode */
+.dark .bg-brand-gradient { background-image: linear-gradient(135deg, #1c1c1c 0%, #0a0a0a 60%, #000000 100%) !important; }
+.dark .bg-brand-gradient .text-white,
+.dark .bg-brand-gradient h1,
+.dark .bg-brand-gradient p { color: #ffffff !important; }
+
+/* Scrollbar + selection in dark */
+.dark ::-webkit-scrollbar-track { background: #151518; }
+.dark ::-webkit-scrollbar-thumb { background: #3a3a42; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #e5e5e5; }
+.dark ::selection { background: #fafafa; color: #0a0a0a; }
+
 /* Print styles for PDF export */
 @media print {
     @page { size: A4; margin: 14mm; }
