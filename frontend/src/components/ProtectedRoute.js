@@ -4,8 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 
 const Loading = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
-    <Loader2 className="w-8 h-8 animate-spin text-[#404080]" />
+  <div className="min-h-screen flex items-center justify-center bg-[#F7F7FB]">
+    <Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" />
   </div>
 );
 

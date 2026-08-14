@@ -8,8 +8,12 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        heading: ["Chivo", "sans-serif"],
-        sans: ["IBM Plex Sans", "sans-serif"],
+        heading: ["Sora", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "sans-serif"],
+      },
+      boxShadow: {
+        soft: "0 1px 2px rgba(79, 70, 229, 0.04), 0 6px 20px -8px rgba(79, 70, 229, 0.12)",
+        "soft-lg": "0 4px 10px -4px rgba(79, 70, 229, 0.10), 0 18px 40px -16px rgba(79, 70, 229, 0.22)",
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -56,6 +60,15 @@ module.exports = {
           '3': 'hsl(var(--chart-3))',
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))'
+        },
+        brand: {
+          50: '#EEF2FF',
+          100: '#E0E7FF',
+          200: '#C7D2FE',
+          500: '#6366F1',
+          600: '#4F46E5',
+          700: '#4338CA',
+          800: '#312E81',
         }
       },
       keyframes: {

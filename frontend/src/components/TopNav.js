@@ -20,10 +20,10 @@ export const TopNav = ({ right = null }) => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <button
           onClick={() => navigate(user?.role === "admin" ? "/admin" : "/dashboard")}
-          className="flex items-center gap-2.5 text-[#404080] transition-colors hover:text-[#29166F]"
+          className="flex items-center gap-2.5 text-[#4F46E5] transition-colors hover:text-[#4338CA]"
           data-testid="nav-home-button"
         >
-          <div className="w-9 h-9 rounded-md bg-[#404080] flex items-center justify-center text-white">
+          <div className="w-9 h-9 rounded-md bg-[#4F46E5] flex items-center justify-center text-white">
             <GraduationCap className="w-5 h-5" />
           </div>
           <div className="text-left leading-tight hidden sm:block">

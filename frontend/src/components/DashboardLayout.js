@@ -28,11 +28,11 @@ const SidebarContent = ({ nav, onNavigate }) => {
     <div className="flex flex-col h-full bg-white">
       {/* Brand */}
       <div className="h-16 flex items-center gap-2.5 px-5 border-b border-slate-100">
-        <div className="w-9 h-9 rounded-lg bg-[#404080] flex items-center justify-center text-white shrink-0">
+        <div className="w-9 h-9 rounded-2xl bg-brand-gradient flex items-center justify-center text-white shrink-0 shadow-soft">
           <GraduationCap className="w-5 h-5" />
         </div>
         <div className="leading-tight min-w-0">
-          <p className="font-heading font-black tracking-tight text-sm text-slate-800 truncate">UNIVERSITAS TERBUKA</p>
+          <p className="font-heading font-extrabold tracking-tight text-sm text-slate-800 truncate">UNIVERSITAS TERBUKA</p>
           <p className="text-[10px] text-slate-400 tracking-wider uppercase truncate">Belajar Mandiri</p>
         </div>
       </div>
@@ -52,9 +52,9 @@ const SidebarContent = ({ nav, onNavigate }) => {
                   else navigate(item.to);
                   onNavigate?.();
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   active
-                    ? "bg-[#EAEAF2] text-[#404080]"
+                    ? "bg-brand-gradient-soft text-[#4338CA]"
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
@@ -69,8 +69,8 @@ const SidebarContent = ({ nav, onNavigate }) => {
 
       {/* User */}
       <div className="p-3 border-t border-slate-100">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-md">
-          <div className="w-9 h-9 rounded-full bg-[#404080] text-white flex items-center justify-center text-xs font-bold shrink-0">
+        <div className="flex items-center gap-3 px-2 py-2 rounded-xl">
+          <div className="w-9 h-9 rounded-full bg-brand-gradient text-white flex items-center justify-center text-xs font-bold shrink-0">
             {initials}
           </div>
           <div className="min-w-0 flex-1 leading-tight">
@@ -95,17 +95,55 @@ const SidebarContent = ({ nav, onNavigate }) => {
   );
 };
 
+// Mobile bottom navigation — quick access to primary destinations
+const BottomNav = ({ nav }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return (
+    <nav
+      className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-2 pb-[env(safe-area-inset-bottom)]"
+      data-testid="bottom-nav"
+    >
+      <div className="flex items-stretch justify-around">
+        {nav.map((item) => {
+          const active = item.match ? item.match(location.pathname) : location.pathname === item.to;
+          const isPrimary = item.primary;
+          return (
+            <button
+              key={item.label}
+              data-testid={`bottomnav-${item.testid}`}
+              onClick={() => (item.onClick ? item.onClick() : navigate(item.to))}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2"
+            >
+              {isPrimary ? (
+                <span className="w-11 h-11 -mt-5 rounded-2xl bg-brand-gradient text-white flex items-center justify-center shadow-soft-lg">
+                  <item.icon className="w-5 h-5" />
+                </span>
+              ) : (
+                <item.icon className={`w-5 h-5 ${active ? "text-[#4F46E5]" : "text-slate-400"}`} />
+              )}
+              <span className={`text-[10px] font-medium ${active ? "text-[#4F46E5]" : "text-slate-500"}`}>
+                {item.short || item.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+};
+
 export const DashboardLayout = ({ nav, title, subtitle, headerRight, children }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA]">
+    <div className="min-h-screen bg-[#F7F7FB]">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 border-r border-slate-200 z-30">
         <SidebarContent nav={nav} />
       </aside>
 
-      {/* Mobile sidebar */}
+      {/* Mobile sidebar (full menu incl. logout) */}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="p-0 w-64">
           <SidebarContent nav={nav} onNavigate={() => setOpen(false)} />
@@ -133,8 +171,10 @@ export const DashboardLayout = ({ nav, title, subtitle, headerRight, children })
           {headerRight}
         </header>
 
-        <main className="p-4 sm:p-8">{children}</main>
+        <main className="p-4 sm:p-8 pb-24 lg:pb-8">{children}</main>
       </div>
+
+      <BottomNav nav={nav} />
     </div>
   );
 };
